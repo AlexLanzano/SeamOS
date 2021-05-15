@@ -1,0 +1,17 @@
+* SeamOS
+SeamOS is an embedded operating system that has a collection of
+platform independent drivers, libraries, and MCU specific code to allow
+you to quickly write embedded application software.
+
+** Directory Structure
+#+BEGIN_SRC
+drivers/     Contains code to drive specific peripherals, devices, and interfaces
+
+examples/    Contains example projects
+
+kernel/      Contains code specific to the SeamOS kernel
+
+libraries/   Contains code that is used universally throughout the project
+
+mcu/         Contains code specific to the supported microcontrollers
+#+END_SRC
