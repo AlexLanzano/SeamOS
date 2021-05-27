@@ -72,13 +72,31 @@ void rcc_set_msi_clock_speed(uint32_t clock_speed)
         msi_clock_speed = RCC_MSI_CLOCK_SPEED_4MHz;
     }
 
-    rcc_disable_msi_clock();
     RCC->CR &= ~(RCC_CR_MSIRANGE);
     RCC->CR |= msi_clock_speed << RCC_CR_MSIRANGE_Pos;
 }
 
+void rcc_set_pll_clock_speed(uint32_t pll_clock_speed)
+{
+    rcc_disable_pll_clock();
+    switch (pll_clock_speed) {
+    case 64000000:
+        RCC->CR &= ~(RCC_CR_MSIRANGE);
+        RCC->CR |= RCC_MSI_CLOCK_SPEED_16MHz << RCC_CR_MSIRANGE_Pos;
+        RCC->PLLCFGR &= ~RCC_PLLCFGR_PLLN_Msk;
+        RCC->PLLCFGR |= ((8 << RCC_PLLCFGR_PLLN_Pos) |
+                         (0 << RCC_PLLCFGR_PLLM_Pos) |
+                         (1 << RCC_PLLCFGR_PLLR_Pos) |
+                         (1 << RCC_PLLCFGR_PLLSRC_Pos) |
+                         (1 << RCC_PLLCFGR_PLLREN_Pos));
+        break;
+    }
+    rcc_enable_pll_clock();
+}
+
 void rcc_set_system_clock_source(rcc_system_clock_source_t system_clock_source)
 {
+    FLASH->ACR |= 2 << FLASH_ACR_LATENCY_Pos;
     RCC->CFGR &= ~(RCC_CFGR_SW);
     RCC->CFGR |= (system_clock_source << RCC_CFGR_SW_Pos);
 }
@@ -127,6 +145,16 @@ void rcc_enable_msi_clock()
 void rcc_disable_msi_clock()
 {
     RCC->CR &= ~RCC_CR_MSION;
+}
+
+void rcc_enable_pll_clock()
+{
+    RCC->CR |= RCC_CR_PLLON;
+}
+
+void rcc_disable_pll_clock()
+{
+    RCC->CR &= ~RCC_CR_PLLON;
 }
 
 void rcc_enable_gpioa_clock()

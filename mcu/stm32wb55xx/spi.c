@@ -227,7 +227,9 @@ error_t spi_write(spi_device_handle_t handle, void *data, uint32_t length)
     SPI_TypeDef *spi = g_spi_devices[handle].config.spi;
     uint8_t *d = data;
     while (length--) {
-        spi_transmit_8bit(spi, *d++);
+        while (!spi_tx_buffer_empty(spi)) {}
+        *(uint8_t *)&spi->DR = *d++;
+        //spi_transmit_8bit(spi, *d++);
     }
 
     return SUCCESS;
@@ -302,7 +304,7 @@ error_t spi_interface_init(spi_interface_configuration_t config, spi_interface_h
     sck_pin.pin = config.sck_pin;
     sck_pin.mode = GPIO_MODE_ALT_FUNC;
     sck_pin.output_type = GPIO_OUTPUT_TYPE_PUSH_PULL;
-    sck_pin.output_speed = GPIO_OUTPUT_SPEED_LOW;
+    sck_pin.output_speed = GPIO_OUTPUT_SPEED_HIGH;
     sck_pin.pull_resistor = GPIO_PULL_RESISTOR_NONE;
     sck_pin.alternative_function = 5;
     error = gpio_init(sck_pin, &interface->sck_handle);
@@ -315,7 +317,7 @@ error_t spi_interface_init(spi_interface_configuration_t config, spi_interface_h
     miso_pin.pin = config.miso_pin;
     miso_pin.mode = GPIO_MODE_ALT_FUNC;
     miso_pin.output_type = GPIO_OUTPUT_TYPE_PUSH_PULL;
-    miso_pin.output_speed = GPIO_OUTPUT_SPEED_LOW;
+    miso_pin.output_speed = GPIO_OUTPUT_SPEED_HIGH;
     miso_pin.pull_resistor = GPIO_PULL_RESISTOR_NONE;
     miso_pin.alternative_function = 5;
     error = gpio_init(miso_pin, &interface->miso_handle);
@@ -328,7 +330,7 @@ error_t spi_interface_init(spi_interface_configuration_t config, spi_interface_h
     mosi_pin.pin = config.mosi_pin;
     mosi_pin.mode = GPIO_MODE_ALT_FUNC;
     mosi_pin.output_type = GPIO_OUTPUT_TYPE_PUSH_PULL;
-    mosi_pin.output_speed = GPIO_OUTPUT_SPEED_LOW;
+    mosi_pin.output_speed = GPIO_OUTPUT_SPEED_HIGH;
     mosi_pin.pull_resistor = GPIO_PULL_RESISTOR_NONE;
     mosi_pin.alternative_function = 5;
     error = gpio_init(mosi_pin, &interface->mosi_handle);

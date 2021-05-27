@@ -10,8 +10,8 @@
 typedef enum spi_clock_mode {
     SPI_CLOCK_MODE_0,
     SPI_CLOCK_MODE_1,
-    SPI_CLOCK_MODE_3,
-    SPI_CLOCK_MODE_4
+    SPI_CLOCK_MODE_2,
+    SPI_CLOCK_MODE_3
 } spi_clock_mode_t;
 
 typedef enum spi_mode {
