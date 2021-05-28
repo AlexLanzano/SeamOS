@@ -42,7 +42,7 @@ typedef enum rcc_rtc_clock_source {
 
 void rcc_reset();
 
-void rcc_set_msi_clock_speed(rcc_msi_clock_speed_t msi_clock_speed);
+void rcc_set_msi_clock_speed(uint32_t msi_clock_speed);
 void rcc_set_system_clock_source(rcc_system_clock_source_t system_clock_source);
 void rcc_set_lpuart1_clock_source(rcc_lpuart_clock_source_t lpuart_clock_source);
 void rcc_set_rtc_clock_source(rcc_rtc_clock_source_t rcc_clock_source);

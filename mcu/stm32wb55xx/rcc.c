@@ -27,8 +27,51 @@ void rcc_reset()
     RCC->CCIPR = 0x00000000;
 }
 
-void rcc_set_msi_clock_speed(rcc_msi_clock_speed_t msi_clock_speed)
+void rcc_set_msi_clock_speed(uint32_t clock_speed)
 {
+    rcc_msi_clock_speed_t msi_clock_speed;
+
+    switch (clock_speed) {
+    case 100000:
+        msi_clock_speed = RCC_MSI_CLOCK_SPEED_100kHz;
+        break;
+    case 200000:
+        msi_clock_speed = RCC_MSI_CLOCK_SPEED_200kHz;
+        break;
+    case 400000:
+        msi_clock_speed = RCC_MSI_CLOCK_SPEED_400kHz;
+        break;
+    case 800000:
+        msi_clock_speed = RCC_MSI_CLOCK_SPEED_800kHz;
+        break;
+    case 1000000:
+        msi_clock_speed = RCC_MSI_CLOCK_SPEED_1MHz;
+        break;
+    case 2000000:
+        msi_clock_speed = RCC_MSI_CLOCK_SPEED_2MHz;
+        break;
+    case 4000000:
+        msi_clock_speed = RCC_MSI_CLOCK_SPEED_4MHz;
+        break;
+    case 8000000:
+        msi_clock_speed = RCC_MSI_CLOCK_SPEED_8MHz;
+        break;
+    case 16000000:
+        msi_clock_speed = RCC_MSI_CLOCK_SPEED_16MHz;
+        break;
+    case 24000000:
+        msi_clock_speed = RCC_MSI_CLOCK_SPEED_24MHz;
+        break;
+    case 32000000:
+        msi_clock_speed = RCC_MSI_CLOCK_SPEED_32MHz;
+        break;
+    case 48000000:
+        msi_clock_speed = RCC_MSI_CLOCK_SPEED_48MHz;
+        break;
+    default:
+        msi_clock_speed = RCC_MSI_CLOCK_SPEED_4MHz;
+    }
+
     rcc_disable_msi_clock();
     RCC->CR &= ~(RCC_CR_MSIRANGE);
     RCC->CR |= msi_clock_speed << RCC_CR_MSIRANGE_Pos;

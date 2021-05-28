@@ -1,5 +1,5 @@
 #include <stm32wb55xx/gpio.h>
-#include <stm32wb55xx/systick_timer.h>
+#include <mcu/system_timer.h>
 #include <kernel/task/task_manager.h>
 #include <libraries/error.h>
 #include <libraries/string.h>
@@ -32,8 +32,8 @@ void blink_application_start()
     while (task_manager_task_is_running(task)) {
         log_debug("Blink!");
         turn_on_led();
-        systick_timer_wait_ms(500);
+        system_timer_wait_ms(500);
         turn_off_led();
-        systick_timer_wait_ms(500);
+        system_timer_wait_ms(500);
     }
 }

@@ -1,3 +1,4 @@
+#include <config.h>
 #include <stm32wb55xx.h>
 #include <stm32wb55xx/gpio.h>
 #include <stm32wb55xx/lpuart.h>
@@ -118,7 +119,7 @@ void __attribute__((naked)) Reset_Handler()
     SCB->VTOR = (uint32_t)interrupt_vector_table;
 
     rcc_reset();
-    rcc_set_msi_clock_speed(RCC_MSI_CLOCK_SPEED_16MHz);
+    rcc_set_msi_clock_speed(CONFIG_CLOCK_FREQ);
     rcc_set_system_clock_source(RCC_SYSTEM_CLOCK_SOURCE_MSI);
     rcc_disable_interrupts();
 

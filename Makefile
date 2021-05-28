@@ -1,8 +1,14 @@
-include $(SEAMOS_CONFIG_PATH)/config.mk
+include mcu/$(MCU)/config.mk
+
+GCC = $(COMPILER)gcc
+AR = $(COMPILER)ar
+
+CONFIG ?= config
+SEAMOS_LIB ?= SeamOS.a
 
 INCLUDE = -I. -Imcu/$(MCU)/include
-CFLAGS = -Wall -Werror -c -ffreestanding -nostdlib -mcpu=$(CPU) $(INCLUDE) \
-         -DLOG_LEVEL=$(CONFIG_LOG_LEVEL) -MMD -MF $(DEPDIR)/$*.d
+CFLAGS = -Wall -Werror -c -ffreestanding -nostdlib $(MCU_CFLAGS) $(INCLUDE) \
+         -MMD -MF $(DEPDIR)/$*.d
 
 DEPDIR = .deps/
 
@@ -20,15 +26,16 @@ SEAMOS_OBJECTS = $(patsubst %.c,%.o,$(SEAMOS_KERNEL_SOURCE)) \
 DEPENDS = $(patsubst %.c,$(DEPDIR)/%.d,$(SEAMOS_KERNEL_SOURCE)) \
           $(patsubst %.c,$(DEPDIR)/%.d,$(SEAMOS_DRIVER_SOURCE)) \
           $(patsubst %.c,$(DEPDIR)/%.d,$(SEAMOS_MCU_SOURCE)) \
-          $(patsubst %.c,$(DEPDIR)/%.d,$(SEAMOS_LIBRARIES_SOURCE))
+          $(patsubst %.c,$(DEPDIR)/%.d,$(SEAMOS_LIBRARIES_SOURCE)) \
+          $(CONFIG)
 
-all: $(SEAMOS_LIB)
+all: config.h $(SEAMOS_LIB)
+
+config.h: $(CONFIG)
+	scripts/generate_config_header.py $(CONFIG)
 
 %.d:
 	@mkdir -p $(@D)
-
-%.o: %.psfu
-	$(OBJCOPY) -O elf32-littlearm -B arm -I binary $^ $@
 
 %.o: %.c Makefile
 	$(GCC) $(CFLAGS) -o $@ $<
@@ -38,6 +45,6 @@ $(SEAMOS_LIB): $(SEAMOS_OBJECTS)
 
 .PHONY: clean
 clean:
-	rm -rf $(DEPDIR) $(SEAMOS_OBJECTS) $(SEAMOS_LIB)
+	rm -rf $(DEPDIR) $(SEAMOS_OBJECTS) $(SEAMOS_LIB) config.h
 
 include $(DEPENDS)

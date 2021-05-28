@@ -1,8 +1,17 @@
-include config.mk
+export MCU = stm32wb55xx
+export SEAMOS_LIB = $(PWD)/SeamOS.a
+export CONFIG = $(PWD)/config
+SEAMOS_PATH = ../../
+GCC = $(COMPILER)gcc
+LD = $(COMPILER)ld
+OBJCOPY = $(COMPILER)objcopy
+LINKER_SCRIPT = linker.ld
+
+include $(SEAMOS_PATH)/mcu/$(MCU)/config.mk
 
 INCLUDE = -I$(SEAMOS_PATH) -I$(SEAMOS_PATH)/mcu/$(MCU)/include -I$(PWD)
-CFLAGS ?= -Wall -Werror -c -ffreestanding -nostdlib -mcpu=$(CPU) $(INCLUDE) \
-          -DLOG_LEVEL=$(CONFIG_LOG_LEVEL) -MMD -MF $(DEPDIR)/$*.d
+CFLAGS ?= -Wall -Werror -c -ffreestanding -nostdlib $(MCU_CFLAGS) $(INCLUDE) \
+          -MMD -MF $(DEPDIR)/$*.d
 LDFLAGS ?= --omagic -static
 
 DEPDIR = .deps/
@@ -16,7 +25,6 @@ DEPENDS = $(patsubst %.c,$(DEPDIR)/%.d,$(BLINK_EXAMPLE_SOURCE))
 .SECONDARY: blink_example.elf $(BLINK_EXAMPLE_OBJECTS)
 all: blink_example.bin
 
-.PHONY: $(SEAMOS_LIB)
 $(SEAMOS_LIB):
 	$(MAKE) -C $(SEAMOS_PATH)
 
@@ -27,7 +35,7 @@ $(SEAMOS_LIB):
 	$(GCC) $(CFLAGS) -o $@ $<
 
 %.elf: $(SEAMOS_LIB) $(BLINK_EXAMPLE_OBJECTS) linker.ld
-	$(LD) $(LDFLAGS) -T $(LINKER_SCRIPT) -o $@ $(SEAMOS_OBJECTS) $(BLINK_EXAMPLE_OBJECTS) $(SEAMOS_LIB)
+	$(LD) $(LDFLAGS) -T $(LINKER_SCRIPT) -o $@ $(BLINK_EXAMPLE_OBJECTS) $(SEAMOS_LIB)
 
 %.bin: %.elf
 	$(OBJCOPY) $^ -O binary $@

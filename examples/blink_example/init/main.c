@@ -1,7 +1,8 @@
+#include <config.h>
 #include <stm32wb55xx.h>
 #include <stm32wb55xx/gpio.h>
 #include <stm32wb55xx/lpuart.h>
-#include <stm32wb55xx/systick_timer.h>
+#include <mcu/system_timer.h>
 #include <kernel/task/task_manager.h>
 #include <kernel/debug/log.h>
 #include <libraries/string.h>
@@ -54,8 +55,8 @@ void main()
     log.lpuart_handle = lpuart_handle;
     log_init(log);
 
-    systick_timer_init();
-    systick_timer_start();
+    system_timer_init();
+    system_timer_start();
 
     task_manager_init();
     task_manager_add_task(string("blink"), &blink_application_start, &data);
@@ -80,7 +81,7 @@ void __attribute__((naked)) Reset_Handler()
     SCB->VTOR = (uint32_t)interrupt_vector_table;
 
     rcc_reset();
-    rcc_set_msi_clock_speed(RCC_MSI_CLOCK_SPEED_16MHz);
+    rcc_set_msi_clock_speed(CONFIG_CLOCK_FREQ);
     rcc_set_system_clock_source(RCC_SYSTEM_CLOCK_SOURCE_MSI);
     rcc_disable_interrupts();
 

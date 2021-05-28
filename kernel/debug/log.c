@@ -1,11 +1,12 @@
 #include <stdarg.h>
+#include <config.h>
 #include <mcu/lpuart.h>
 #include <kernel/debug/log.h>
 #include <libraries/string.h>
 #include <libraries/error.h>
 
-#ifdef LOG_LEVEL
-log_level_t g_log_level = LOG_LEVEL;
+#ifdef CONFIG_LOG_LEVEL
+log_level_t g_log_level = CONFIG_LOG_LEVEL;
 #else
 log_level_t g_log_level = LOG_LEVEL_INFO;
 #endif
