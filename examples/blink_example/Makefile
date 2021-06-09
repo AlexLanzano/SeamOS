@@ -25,6 +25,7 @@ DEPENDS = $(patsubst %.c,$(DEPDIR)/%.d,$(BLINK_EXAMPLE_SOURCE))
 .SECONDARY: blink_example.elf $(BLINK_EXAMPLE_OBJECTS)
 all: blink_example.bin
 
+.PHONY: $(SEAMOS_LIB)
 $(SEAMOS_LIB):
 	$(MAKE) -C $(SEAMOS_PATH)
 

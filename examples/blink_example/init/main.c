@@ -6,6 +6,8 @@
 #include <kernel/task/task_manager.h>
 #include <kernel/debug/log.h>
 #include <libraries/string.h>
+#include <libraries/queue.h>
+#include <libraries/error.h>
 #include <applications/blink.h>
 
 extern uint32_t _estack[];
@@ -48,13 +50,12 @@ void main()
     lpuart_config.tx_pin = 2;
     lpuart_config.clock_source = RCC_LPUART_CLOCK_SOURCE_SYSCLK;
     lpuart_config.word_length = LPUART_WORD_LENGTH_8;
-    lpuart_config.baud_rate_prescaler = 0x8ae3;
+    lpuart_config.baud_rate_prescaler = 0x115c7;
     lpuart_config.stop_bits = LPUART_STOP_BITS_1;
     lpuart_init(lpuart_config, &lpuart_handle);
 
     log.lpuart_handle = lpuart_handle;
     log_init(log);
-
     system_timer_init();
     system_timer_start();
 
