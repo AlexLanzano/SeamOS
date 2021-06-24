@@ -3,38 +3,40 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <config.h>
+#include <libraries/error.h>
 #include <libraries/string.h>
 
-#define TASK_LIST_MAX 16
-#define TASK_NAME_MAX 16
+typedef uint32_t task_handle_t;
 
 typedef enum task_status {
-    TASK_STATUS_STOPPED,
-    TASK_STATUS_STOP,
-    TASK_STATUS_RUNNING,
-    TASK_STATUS_START
+    TASK_STATUS_IDLE,
+    TASK_STATUS_READY,
+    TASK_STATUS_BLOCKED,
 } task_status_t;
 
 typedef struct task {
+    uint32_t *stack;
+    uint32_t stack_size;
+    uint32_t priority;
     task_status_t status;
-    char name_data[TASK_NAME_MAX];
-    string_t name;
-    void *task_data;
-    void (*task_start)(void);
+    uint32_t block_until;
+    void (*task_entry)(void);
 } task_t;
 
-typedef struct task_manager{
-    uint32_t task_count;
-    task_t task_list[TASK_LIST_MAX];
-} task_manager_t;
-
-
-task_t *task_manager_get_task_by_name(string_t name);
-uint32_t task_manager_start_task_by_name(string_t name);
-void task_manager_add_task(string_t task_name, void (*task_start)(void), void *task_data);
-task_manager_t *task_manager_get();
-bool task_manager_task_is_running(task_t *task);
-void task_manager_init();
+error_t task_manager_init();
+error_t task_manager_deinit();
 void task_manager_start();
+void task_manager_schedule();
+
+error_t task_manager_init_task(void (*task_entry)(void),
+                               uint32_t priority,
+                               uint32_t stack_size,
+                               uint32_t *stack,
+                               task_handle_t *handle);
+error_t task_manager_deinit_task(task_handle_t handle);
+void task_manager_task_wait_ms(uint32_t ms);
+error_t task_manager_block_task(task_handle_t handle);
+error_t task_manager_unblock_task(task_handle_t handle);
 
 #endif

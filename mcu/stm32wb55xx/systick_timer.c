@@ -1,6 +1,8 @@
 #include <config.h>
 #include <stm32wb55xx.h>
+#include <arch/arch.h>
 #include <mcu/system_timer.h>
+#include <kernel/task/task_manager.h>
 #include <kernel/debug/log.h>
 
 uint32_t tick_count = 0;
@@ -48,4 +50,5 @@ void system_timer_wait_ms(uint32_t ms)
 void SysTick_Handler()
 {
     tick_count++;
+    arch_context_switch();
 }

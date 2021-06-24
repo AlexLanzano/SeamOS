@@ -19,12 +19,14 @@ extern uint32_t _sbss[];
 extern uint32_t _ebss[];
 extern uint32_t interrupt_vector_table[];
 
+gpio_handle_t g_led_handle;
+extern uint32_t g_blink_stack[];
+
 void main()
 {
-    blink_application_data_t data;
+    task_handle_t blink_task_handle;
     lpuart_configuration_t lpuart_config;
     lpuart_handle_t lpuart_handle;
-    gpio_configuration_t pin;
     log_configuration_t log;
 
     __enable_irq();
@@ -33,14 +35,6 @@ void main()
     rcc_enable_lpuart1_clock();
     rcc_enable_gpioa_clock();
     rcc_enable_gpiob_clock();
-
-    pin.port = GPIOA;
-    pin.pin = 0;
-    pin.mode = GPIO_MODE_OUTPUT;
-    pin.output_type = GPIO_OUTPUT_TYPE_PUSH_PULL;
-    pin.output_speed = GPIO_OUTPUT_SPEED_LOW;
-    pin.pull_resistor = GPIO_PULL_RESISTOR_NONE;
-    gpio_configure_pin(pin, &data.gpio_handle);
 
     // Setup lpuart interface for log
     lpuart_config.lpuart = LPUART1;
@@ -56,12 +50,15 @@ void main()
 
     log.lpuart_handle = lpuart_handle;
     log_init(log);
-    system_timer_init();
-    system_timer_start();
+
+    log_info("Start");
 
     task_manager_init();
-    task_manager_add_task(string("blink"), &blink_application_start, &data);
-    task_manager_start_task_by_name(string("blink"));
+    task_manager_init_task(&blink_task_entry,
+                           1,
+                           500,
+                           g_blink_stack,
+                           &blink_task_handle);
     task_manager_start();
 }
 
@@ -87,4 +84,21 @@ void __attribute__((naked)) Reset_Handler()
     rcc_disable_interrupts();
 
     main();
+}
+void HardFault_Handler()
+{
+    log_error(ERROR_FAULT, "HARD FAULT");
+    while(1);
+}
+
+void BusFault_Handler()
+{
+    log_error(ERROR_FAULT, "BUS FAULT");
+    while(1);
+}
+
+void UsageFault_Handler()
+{
+    log_error(ERROR_FAULT, "USEAGE FAULT");
+    while(1);
 }

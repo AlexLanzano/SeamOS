@@ -10,7 +10,7 @@ LINKER_SCRIPT = linker.ld
 include $(SEAMOS_PATH)/mcu/$(MCU)/config.mk
 
 INCLUDE = -I$(SEAMOS_PATH) -I$(SEAMOS_PATH)/mcu/$(MCU)/include -I$(PWD)
-CFLAGS ?= -Wall -Werror -c -ffreestanding -nostdlib $(MCU_CFLAGS) $(INCLUDE) \
+CFLAGS ?= -Wall -Werror -c -ffreestanding -nostdlib $(MCU_CFLAGS) $(INCLUDE) -g \
           -MMD -MF $(DEPDIR)/$*.d
 LDFLAGS ?= --omagic -static
 

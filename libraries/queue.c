@@ -123,3 +123,13 @@ error_t queue_pop(queue_handle_t handle, void *item)
 
     return SUCCESS;
 }
+
+uint32_t queue_length(queue_handle_t handle)
+{
+    if (queue_invalid_handle(handle)) {
+        return 0;
+    }
+
+    return g_queues[handle].length;
+
+}
