@@ -88,14 +88,6 @@ void log_debug(char *format, ...)
     log(LOG_LEVEL_DEBUG, "\r\n");
 }
 
-uint8_t log_wait_for_input()
-{
-    uint8_t data;
-    while (lpuart_rx_empty());
-    lpuart_read(g_lpuart_handle, &data);
-    return data;
-}
-
 void log_init(log_configuration_t config)
 {
     g_lpuart_handle = config.lpuart_handle;

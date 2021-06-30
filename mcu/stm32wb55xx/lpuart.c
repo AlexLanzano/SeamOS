@@ -6,6 +6,7 @@
 #include <stm32wb55xx/gpio.h>
 #include <libraries/string.h>
 #include <libraries/error.h>
+#include <libraries/semaphore.h>
 
 #define LPUART_DEVICE_MAX 8
 
@@ -14,7 +15,8 @@ typedef struct lpuart_device {
     USART_TypeDef *device;
 } lpuart_device_t;
 
-lpuart_device_t g_lpuart_devices[LPUART_DEVICE_MAX];
+static lpuart_device_t g_lpuart_devices[LPUART_DEVICE_MAX];
+static semaphore_handle_t g_lpuart_mutex;
 
 static bool lpuart_invalid_handle(lpuart_handle_t handle)
 {
@@ -39,11 +41,6 @@ static error_t lpuart_find_free_device(lpuart_handle_t *handle)
     return ERROR_NO_MEMORY;
 }
 
-bool lpuart_rx_empty()
-{
-    return !(LPUART1->ISR & USART_ISR_RXNE);
-}
-
 error_t lpuart_read(lpuart_handle_t handle, uint8_t *data)
 {
     if (lpuart_invalid_handle(handle) || !data) {
@@ -52,7 +49,11 @@ error_t lpuart_read(lpuart_handle_t handle, uint8_t *data)
 
     USART_TypeDef *device = g_lpuart_devices[handle].device;
 
+    while (semaphore_lock(g_lpuart_mutex) == ERROR_LOCKED);
+
     *data = device->RDR;
+
+    semaphore_release(g_lpuart_mutex);
 
     return SUCCESS;
 }
@@ -65,11 +66,15 @@ error_t lpuart_write(lpuart_handle_t handle, uint8_t *data, uint32_t length)
 
     USART_TypeDef *device = g_lpuart_devices[handle].device;
 
+    while (semaphore_lock(g_lpuart_mutex) == ERROR_LOCKED);
+
     for (uint32_t i = 0; i < length; i++) {
         device->TDR = (uint32_t)data[i];
         // TODO: add timeout here
         while (!(device->ISR & USART_ISR_TC)) {}
     }
+
+    semaphore_release(g_lpuart_mutex);
 
     return SUCCESS;
 }
@@ -89,6 +94,11 @@ error_t lpuart_init(lpuart_configuration_t config, lpuart_handle_t *handle)
 
     g_lpuart_devices[*handle].is_initialized = true;
     g_lpuart_devices[*handle].device = config.lpuart;
+
+    error = semaphore_init(1, &g_lpuart_mutex);
+    if (error) {
+        return error;
+    }
 
     tx_pin.port = config.tx_port;
     tx_pin.pin = config.tx_pin;

@@ -59,6 +59,7 @@ void main()
                            500,
                            g_blink_stack,
                            &blink_task_handle);
+
     task_manager_start();
 }
 

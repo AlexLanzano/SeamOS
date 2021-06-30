@@ -22,7 +22,6 @@ void log(log_level_t log_level, char *format, ...);
 void log_error(error_t error, char *format, ...);
 void log_info(char *format, ...);
 void log_debug(char *format, ...);
-uint8_t log_wait_for_input();
 void log_init(log_configuration_t config);
 
 #endif
