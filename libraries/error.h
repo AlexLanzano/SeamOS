@@ -8,6 +8,7 @@ typedef enum {
     ERROR_IO,
     ERROR_TIMEOUT,
     ERROR_FAULT,
+    ERROR_LOCKED,
 } error_t;
 
 struct error_message {
