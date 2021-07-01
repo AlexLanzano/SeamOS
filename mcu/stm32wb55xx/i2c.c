@@ -6,6 +6,7 @@
 #include <stm32wb55xx/i2c.h>
 #include <stm32wb55xx/gpio.h>
 #include <stm32wb55xx/rcc.h>
+#include <arch/arch.h>
 
 #define I2C_DEVICE_MAX 8
 
@@ -58,7 +59,11 @@ error_t i2c_stop(i2c_handle_t handle)
 {
     i2c_device_configuration_t i2c_device = g_i2c_devices[handle].device;
     I2C_TypeDef *i2c = i2c_device.i2c;
+
+    arch_disable_irq();
     i2c->CR2 |= I2C_CR2_STOP;
+    arch_enable_irq();
+
     return SUCCESS;
 }
 
@@ -78,6 +83,7 @@ error_t i2c_read(i2c_handle_t handle, uint8_t *data, uint32_t size)
     I2C_TypeDef *i2c = i2c_device.i2c;
     uint32_t index = 0;
 
+    arch_disable_irq();
     i2c->CR2 |= i2c_device.address_mode << I2C_CR2_ADD10_Pos;
     if (i2c_device.address_mode == I2C_ADDRESS_MODE_7BIT) {
         i2c->CR2 |= i2c_device.address << (I2C_CR2_SADD_Pos+1);
@@ -97,6 +103,7 @@ error_t i2c_read(i2c_handle_t handle, uint8_t *data, uint32_t size)
         data[index++] = i2c->RXDR;
         size--;
     }
+    arch_enable_irq();
     return SUCCESS;
 }
 
@@ -121,6 +128,7 @@ error_t i2c_write(i2c_handle_t handle, uint8_t *data, uint32_t size)
     I2C_TypeDef *i2c = i2c_device.i2c;
     uint32_t index = 0;
 
+    arch_disable_irq();
     i2c->CR2 |= i2c_device.address_mode << I2C_CR2_ADD10_Pos;
     if (i2c_device.address_mode == I2C_ADDRESS_MODE_7BIT) {
         i2c->CR2 |= i2c_device.address << (I2C_CR2_SADD_Pos+1);
@@ -142,6 +150,7 @@ error_t i2c_write(i2c_handle_t handle, uint8_t *data, uint32_t size)
         i2c->TXDR = data[index++];
     }
     while ((i2c->ISR & I2C_ISR_TC) == 0);
+    arch_enable_irq();
     return SUCCESS;
 }
 

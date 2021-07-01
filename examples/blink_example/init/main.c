@@ -29,8 +29,6 @@ void main()
     lpuart_handle_t lpuart_handle;
     log_configuration_t log;
 
-    __enable_irq();
-
     // TODO: Handle this within the driver
     rcc_enable_lpuart1_clock();
     rcc_enable_gpioa_clock();
@@ -86,6 +84,7 @@ void __attribute__((naked)) Reset_Handler()
 
     main();
 }
+
 void HardFault_Handler()
 {
     log_error(ERROR_FAULT, "HARD FAULT");
