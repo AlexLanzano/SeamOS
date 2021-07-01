@@ -1,4 +1,4 @@
-#include <stm32wb55xx/gpio.h>
+#include <mcu/stm32wb55xx/gpio.h>
 #include <mcu/system_timer.h>
 #include <kernel/task/task_manager.h>
 #include <libraries/error.h>

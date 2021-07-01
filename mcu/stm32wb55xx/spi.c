@@ -3,10 +3,10 @@
 #include <kernel/debug/log.h>
 #include <libraries/string.h>
 #include <libraries/error.h>
-#include <stm32wb55xx.h>
-#include <stm32wb55xx/spi.h>
-#include <stm32wb55xx/rcc.h>
-#include <stm32wb55xx/gpio.h>
+#include <mcu/stm32wb55xx/stm32wb55xx.h>
+#include <mcu/stm32wb55xx/spi.h>
+#include <mcu/stm32wb55xx/rcc.h>
+#include <mcu/stm32wb55xx/gpio.h>
 
 #define SPI_DEVICE_MAX 8
 

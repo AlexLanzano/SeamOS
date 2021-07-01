@@ -1,7 +1,7 @@
 #include <config.h>
-#include <stm32wb55xx.h>
-#include <stm32wb55xx/gpio.h>
-#include <stm32wb55xx/lpuart.h>
+#include <mcu/stm32wb55xx/stm32wb55xx.h>
+#include <mcu/stm32wb55xx/gpio.h>
+#include <mcu/stm32wb55xx/lpuart.h>
 #include <mcu/system_timer.h>
 #include <kernel/task/task_manager.h>
 #include <kernel/debug/log.h>

@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <mcu/i2c.h>
-#include <stm32wb55xx/gpio.h>
+#include <mcu/stm32wb55xx/gpio.h>
 #include <libraries/error.h>
 
 typedef uint32_t i2c_handle_t;

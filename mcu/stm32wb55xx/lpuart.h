@@ -4,8 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <mcu/lpuart.h>
-#include <stm32wb55xx/rcc.h>
-#include <stm32wb55xx/gpio.h>
+#include <mcu/stm32wb55xx/rcc.h>
+#include <mcu/stm32wb55xx/gpio.h>
 
 typedef enum lpuart_word_length {
     LPUART_WORD_LENGTH_8,

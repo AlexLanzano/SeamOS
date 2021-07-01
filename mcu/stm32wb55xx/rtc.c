@@ -1,9 +1,9 @@
 #include <libraries/time.h>
 #include <kernel/debug/log.h>
 #include <libraries/error.h>
-#include <stm32wb55xx.h>
-#include <stm32wb55xx/rcc.h>
-#include <stm32wb55xx/rtc.h>
+#include <mcu/stm32wb55xx/stm32wb55xx.h>
+#include <mcu/stm32wb55xx/rcc.h>
+#include <mcu/stm32wb55xx/rtc.h>
 
 error_t rtc_set_date_and_time(datetime_t *datetime)
 {

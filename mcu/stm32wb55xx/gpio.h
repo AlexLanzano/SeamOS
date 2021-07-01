@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <stm32wb55xx.h>
+#include <mcu/stm32wb55xx/stm32wb55xx.h>
 #include <libraries/error.h>
 #include <mcu/gpio.h>
 

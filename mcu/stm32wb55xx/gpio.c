@@ -1,5 +1,5 @@
-#include <stm32wb55xx.h>
-#include <stm32wb55xx/gpio.h>
+#include <mcu/stm32wb55xx/stm32wb55xx.h>
+#include <mcu/stm32wb55xx/gpio.h>
 #include <libraries/error.h>
 #include <libraries/string.h>
 #include <stdint.h>

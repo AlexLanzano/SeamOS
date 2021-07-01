@@ -1,8 +1,8 @@
 #ifndef SPI_H
 #define SPI_H
 
-#include <stm32wb55xx.h>
-#include <stm32wb55xx/gpio.h>
+#include <mcu/stm32wb55xx/stm32wb55xx.h>
+#include <mcu/stm32wb55xx/gpio.h>
 #include <stdbool.h>
 #include <mcu/spi.h>
 #include <libraries/error.h>

@@ -2,10 +2,10 @@
 #include <libraries/error.h>
 #include <kernel/debug/log.h>
 #include <libraries/string.h>
-#include <stm32wb55xx.h>
-#include <stm32wb55xx/i2c.h>
-#include <stm32wb55xx/gpio.h>
-#include <stm32wb55xx/rcc.h>
+#include <mcu/stm32wb55xx/stm32wb55xx.h>
+#include <mcu/stm32wb55xx/i2c.h>
+#include <mcu/stm32wb55xx/gpio.h>
+#include <mcu/stm32wb55xx/rcc.h>
 #include <arch/arch.h>
 
 #define I2C_DEVICE_MAX 8
