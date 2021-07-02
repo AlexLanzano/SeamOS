@@ -128,7 +128,7 @@ error_t gpio_write(gpio_handle_t handle, uint8_t value)
     return SUCCESS;
 }
 
-error_t gpio_configure_pin(gpio_configuration_t config, gpio_handle_t *handle)
+error_t gpio_init(gpio_configuration_t config, gpio_handle_t *handle)
 {
     if (!handle) {
         return ERROR_INVALID;

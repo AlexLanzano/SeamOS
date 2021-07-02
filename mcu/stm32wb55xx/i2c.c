@@ -213,7 +213,7 @@ error_t i2c_interface_init(i2c_interface_configuration_t config)
     scl_pin.output_speed = GPIO_OUTPUT_SPEED_HIGH;
     scl_pin.pull_resistor = GPIO_PULL_RESISTOR_NONE;
     scl_pin.alternative_function = 4;
-    error = gpio_configure_pin(scl_pin, &handle);
+    error = gpio_init(scl_pin, &handle);
     if (error) {
         log_error(error, "Failed to configure scl pin");
         return error;
@@ -226,7 +226,7 @@ error_t i2c_interface_init(i2c_interface_configuration_t config)
     sda_pin.output_speed = GPIO_OUTPUT_SPEED_HIGH;
     sda_pin.pull_resistor = GPIO_PULL_RESISTOR_NONE;
     sda_pin.alternative_function = 4;
-    error = gpio_configure_pin(sda_pin, &handle);
+    error = gpio_init(sda_pin, &handle);
     if (error) {
         log_error(error, "Failed to configure sda pin");
         return error;

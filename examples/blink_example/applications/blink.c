@@ -22,7 +22,7 @@ static inline void turn_off_led()
 void blink_task_entry()
 {
     log_info("Starting blink application");
-    gpio_configure_pin((gpio_configuration_t)
+    gpio_init((gpio_configuration_t)
                        {.port = GPIOA,
                         .pin = 0,
                         .mode = GPIO_MODE_OUTPUT,

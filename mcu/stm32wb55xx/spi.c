@@ -207,7 +207,7 @@ error_t spi_interface_init(spi_interface_configuration_t config)
     sck_pin.output_speed = GPIO_OUTPUT_SPEED_LOW;
     sck_pin.pull_resistor = GPIO_PULL_RESISTOR_NONE;
     sck_pin.alternative_function = 5;
-    error = gpio_configure_pin(sck_pin, &config.sck_handle);
+    error = gpio_init(sck_pin, &config.sck_handle);
     if (error) {
         log_error(error, "Failed to configure sck pin");
         return error;
@@ -220,7 +220,7 @@ error_t spi_interface_init(spi_interface_configuration_t config)
     miso_pin.output_speed = GPIO_OUTPUT_SPEED_LOW;
     miso_pin.pull_resistor = GPIO_PULL_RESISTOR_NONE;
     miso_pin.alternative_function = 5;
-    error = gpio_configure_pin(miso_pin, &config.miso_handle);
+    error = gpio_init(miso_pin, &config.miso_handle);
     if (error) {
         log_error(error, "Failed to configure miso pin");
         return error;
@@ -233,7 +233,7 @@ error_t spi_interface_init(spi_interface_configuration_t config)
     mosi_pin.output_speed = GPIO_OUTPUT_SPEED_LOW;
     mosi_pin.pull_resistor = GPIO_PULL_RESISTOR_NONE;
     mosi_pin.alternative_function = 5;
-    error = gpio_configure_pin(mosi_pin, &config.mosi_handle);
+    error = gpio_init(mosi_pin, &config.mosi_handle);
     if (error) {
         log_error(error, "Failed to configure mosi pin");
         return error;

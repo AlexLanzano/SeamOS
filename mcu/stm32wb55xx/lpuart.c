@@ -107,7 +107,7 @@ error_t lpuart_init(lpuart_configuration_t config, lpuart_handle_t *handle)
     tx_pin.output_speed = GPIO_OUTPUT_SPEED_FAST;
     tx_pin.pull_resistor = GPIO_PULL_RESISTOR_NONE;
     tx_pin.alternative_function = 8;
-    error = gpio_configure_pin(tx_pin, &tx_pin_handle);
+    error = gpio_init(tx_pin, &tx_pin_handle);
     if (error) {
         return error;
     }
@@ -119,7 +119,7 @@ error_t lpuart_init(lpuart_configuration_t config, lpuart_handle_t *handle)
     rx_pin.output_speed = GPIO_OUTPUT_SPEED_FAST;
     rx_pin.pull_resistor = GPIO_PULL_RESISTOR_NONE;
     rx_pin.alternative_function = 8;
-    error = gpio_configure_pin(rx_pin, &rx_pin_handle);
+    error = gpio_init(rx_pin, &rx_pin_handle);
     if (error) {
         return error;
     }

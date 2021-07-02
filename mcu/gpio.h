@@ -11,6 +11,6 @@ error_t gpio_read(gpio_handle_t handle, uint8_t *value);
 
 error_t gpio_write(gpio_handle_t handle, uint8_t value);
 
-error_t gpio_configure_pin(gpio_configuration_t config, gpio_handle_t *handle);
+error_t gpio_init(gpio_configuration_t config, gpio_handle_t *handle);
 
 #endif
