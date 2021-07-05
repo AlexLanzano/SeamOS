@@ -4,18 +4,16 @@ platform independent drivers, libraries, and MCU specific code to allow
 you to quickly write embedded application software.
 
 ** Directory Structure
-#+BEGIN_SRC
-arch/        Contains code specific to the MCU architecture
+~arch/~        Contains code specific to the MCU architecture
 
-drivers/     Contains code to drive specific peripherals, devices, and interfaces
+~drivers/~     Contains code to drive specific peripherals, devices, and interfaces
 
-examples/    Contains example projects
+~examples/~    Contains example projects
 
-kernel/      Contains code specific to the SeamOS kernel
+~kernel/~      Contains code specific to the SeamOS kernel
 
-libraries/   Contains code that is used universally throughout the project
+~libraries/~   Contains code that is used universally throughout the project
 
-mcu/         Contains code specific to the supported microcontrollers
+~mcu/~         Contains code specific to the supported microcontrollers
 
-scripts/     Contains scripts that aid in building SeamOS
-#+END_SRC
+~scripts/~     Contains scripts that aid in building SeamOS
