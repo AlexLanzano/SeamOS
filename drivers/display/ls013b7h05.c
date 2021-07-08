@@ -14,8 +14,7 @@ static uint32_t display_buffer_size = (DISPLAY_WIDTH * DISPLAY_HEIGHT) / 8;
 static uint8_t display_buffer[(DISPLAY_WIDTH * DISPLAY_HEIGHT) / 8];
 static display_draw_attr_t g_draw_attr = DISPLAY_DRAW_ATTR_NORMAL;
 
-static gpio_handle_t g_cs_pin_handle;
-static spi_handle_t g_spi_handle;
+static spi_device_handle_t g_spi_handle;
 
 static uint8_t reverse_byte(uint8_t value)
 {
@@ -28,7 +27,6 @@ static uint8_t reverse_byte(uint8_t value)
 
 error_t ls013b7h05_init(ls013b7h05_configuration_t config)
 {
-    g_cs_pin_handle = config.cs_pin_handle;
     g_spi_handle = config.spi_handle;
 
     // Zero out display buffer
@@ -42,7 +40,7 @@ error_t ls013b7h05_render()
     error_t error;
 
     // set Chip Select to high
-    error = gpio_write(g_cs_pin_handle, 1);
+    error = spi_device_enable(g_spi_handle);
     if (error) {
         log_error(error, "Failed to enable device");
         return error;
@@ -80,7 +78,7 @@ error_t ls013b7h05_render()
 
  exit:
     // set Chip select to low
-    error = gpio_write(g_cs_pin_handle, 0);
+    error = spi_device_disable(g_spi_handle);
     if (error) {
         log_error(error, "Failed to disable device");
     }

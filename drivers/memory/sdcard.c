@@ -7,18 +7,7 @@
 #include <libraries/string.h>
 #include <libraries/error.h>
 
-static gpio_handle_t g_cs_pin_handle;
-static spi_handle_t g_spi_handle;
-
-static inline error_t sdcard_select()
-{
-    return gpio_write(g_cs_pin_handle, 0);
-}
-
-static inline error_t sdcard_deselect()
-{
-    return gpio_write(g_cs_pin_handle, 1);
-}
+static spi_device_handle_t g_spi_handle;
 
 static error_t sdcard_get_response(void *response, uint32_t length)
 {
@@ -98,7 +87,7 @@ error_t sdcard_read_block(uint32_t addr, void *buffer)
     uint8_t *data = buffer;
     uint16_t crc;
 
-    sdcard_select();
+    spi_device_enable(g_spi_handle);
 
     do {
         error_t error = sdcard_send_command(17, addr, &response);
@@ -131,7 +120,7 @@ error_t sdcard_read_block(uint32_t addr, void *buffer)
     }
 
  exit:
-    sdcard_deselect();
+    spi_device_disable(g_spi_handle);
     return error;
 }
 
@@ -140,7 +129,7 @@ error_t sdcard_write_block(uint32_t addr, void *buffer)
     error_t error;
     uint8_t response;
 
-    sdcard_select();
+    spi_device_enable(g_spi_handle);
     do {
         error = sdcard_send_command(24, addr, &response);
         if (error) {
@@ -183,7 +172,7 @@ error_t sdcard_write_block(uint32_t addr, void *buffer)
     }
 
  exit:
-    sdcard_deselect();
+    spi_device_disable(g_spi_handle);
     return error;
 }
 
@@ -191,10 +180,9 @@ error_t sdcard_init(sdcard_configuration_t config)
 {
     error_t error;
 
-    g_cs_pin_handle = config.cs_pin_handle;
     g_spi_handle = config.spi_handle;
 
-    error = gpio_write(g_cs_pin_handle, 1);
+    error = spi_device_disable(g_spi_handle);
     if (error) {
         log_error(error, "Failed to set CS pin");
         return error;
@@ -209,7 +197,7 @@ error_t sdcard_init(sdcard_configuration_t config)
         }
     }
 
-    sdcard_select();
+    spi_device_enable(g_spi_handle);
 
     uint8_t timeout = 100;
     uint8_t response;
@@ -262,6 +250,6 @@ error_t sdcard_init(sdcard_configuration_t config)
         log_error(error, "Timed out while trying to send SD_SEND_OP_COND command");
     }
  exit:
-    sdcard_deselect();
+    spi_device_disable(g_spi_handle);
     return error;
 }

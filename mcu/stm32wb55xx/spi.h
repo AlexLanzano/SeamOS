@@ -59,27 +59,27 @@ typedef enum spi_data_size {
 } spi_data_size_t;
 
 typedef struct spi_interface_configuration {
-    gpio_handle_t sck_handle;
     GPIO_TypeDef *sck_port;
     uint8_t sck_pin;
 
-    gpio_handle_t miso_handle;
     GPIO_TypeDef *miso_port;
     uint8_t miso_pin;
 
-    gpio_handle_t mosi_handle;
     GPIO_TypeDef *mosi_port;
     uint8_t mosi_pin;
 } spi_interface_configuration_t;
 
 typedef struct spi_device_configuration {
     SPI_TypeDef *spi;
+    GPIO_TypeDef *cs_port;
+    uint8_t cs_pin;
     spi_clock_mode_t clock_mode;
     spi_mode_t mode;
     spi_baud_rate_prescaler_t baud_rate_prescaler;
     spi_significant_bit_t significant_bit;
     spi_com_mode_t com_mode;
     spi_data_size_t data_size;
+    bool active_low;
 } spi_device_configuration_t;
 
 #endif

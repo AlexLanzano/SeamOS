@@ -7,8 +7,7 @@
 #include <libraries/error.h>
 
 typedef struct sdcard_configuration {
-    gpio_handle_t cs_pin_handle;
-    spi_handle_t spi_handle;
+    spi_device_handle_t spi_handle;
 } sdcard_configuration_t;
 
 error_t sdcard_read_block(uint32_t addr, void *buffer);

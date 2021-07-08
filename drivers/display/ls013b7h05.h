@@ -12,8 +12,7 @@ typedef enum display_draw_attr{
 } display_draw_attr_t;
 
 typedef struct ls013b7h05_configuration {
-    gpio_handle_t cs_pin_handle;
-    spi_handle_t spi_handle;
+    spi_device_handle_t spi_handle;
 } ls013b7h05_configuration_t;
 
 error_t ls013b7h05_init(ls013b7h05_configuration_t config);

@@ -8,22 +8,8 @@
 #include <libraries/error.h>
 #include "sdep.h"
 
-
-
-static gpio_handle_t g_cs_pin_handle;
 static gpio_handle_t g_irq_pin_handle;
-static spi_handle_t g_spi_handle;
-
-static inline void bluefruit_select()
-{
-    gpio_write(g_cs_pin_handle, 0);
-}
-
-
-static inline void bluefruit_deselect()
-{
-    gpio_write(g_cs_pin_handle, 1);
-}
+static spi_device_handle_t g_spi_handle;
 
 static error_t bluefruit_send(sdep_command_t command, void *payload, uint32_t size)
 {
@@ -36,7 +22,7 @@ static error_t bluefruit_send(sdep_command_t command, void *payload, uint32_t si
     log_debug("sending packet:\r\n type: %x\r\n command: %x\r\n length: %u\r\n",
               packet.message_type, packet.command, size);
 
-    bluefruit_select();
+    spi_device_enable(g_spi_handle);
     error = spi_write(g_spi_handle, &packet, sizeof(sdep_header_t));
     if (error) {
         goto exit;
@@ -50,7 +36,7 @@ static error_t bluefruit_send(sdep_command_t command, void *payload, uint32_t si
     }
 
  exit:
-    bluefruit_deselect();
+    spi_device_disable(g_spi_handle);
     return error;
 }
 
@@ -76,7 +62,7 @@ static error_t bluefruit_receive(sdep_header_t *packet_header, void *payload)
         return ERROR_IO;
     }
 
-    bluefruit_select();
+    spi_device_enable(g_spi_handle);
 
     count = 0;
 
@@ -89,9 +75,9 @@ static error_t bluefruit_receive(sdep_header_t *packet_header, void *payload)
         }
 
         if (packet_header->message_type == 0xff) {
-            bluefruit_deselect();
+            spi_device_disable(g_spi_handle);
             system_timer_wait_ms(50);
-            bluefruit_select();
+            spi_device_enable(g_spi_handle);
         }
     } while (packet_header->message_type != SDEP_MESSAGE_TYPE_RESPONSE &&
              packet_header->message_type != SDEP_MESSAGE_TYPE_ERROR &&
@@ -126,7 +112,7 @@ static error_t bluefruit_receive(sdep_header_t *packet_header, void *payload)
     }
 
  exit:
-    bluefruit_deselect();
+    spi_device_disable(g_spi_handle);
     return error;
 }
 
@@ -168,7 +154,6 @@ error_t bluefruit_init(bluefruit_configuration_t config)
 {
     error_t error;
 
-    g_cs_pin_handle = config.cs_pin_handle;
     g_irq_pin_handle = config.irq_pin_handle;
     g_spi_handle = config.spi_handle;
 

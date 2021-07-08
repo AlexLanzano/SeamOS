@@ -7,9 +7,8 @@
 #include <libraries/error.h>
 
 typedef struct bluefruit_configuration {
-    gpio_handle_t cs_pin_handle;
     gpio_handle_t irq_pin_handle;
-    spi_handle_t spi_handle;
+    spi_device_handle_t spi_handle;
 } bluefruit_configuration_t;
 
 error_t bluefruit_read(void *buffer, uint32_t size);
