@@ -1,5 +1,5 @@
-#ifndef SPI_H
-#define SPI_H
+#ifndef STM32WB55XX_SPI_H
+#define STM32WB55XX_SPI_H
 
 #include <mcu/stm32wb55xx/stm32wb55xx.h>
 #include <mcu/stm32wb55xx/gpio.h>

@@ -1,5 +1,5 @@
-#ifndef STM32WB55XX_SPI_H
-#define STM32WB55XX_SPI_H
+#ifndef SPI_H
+#define SPI_H
 
 #include <stdbool.h>
 #include <libraries/error.h>
