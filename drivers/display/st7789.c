@@ -151,7 +151,6 @@ static error_t st7789_send_command(st7789_handle_t handle, st7789_command_t comm
 
     return SUCCESS;
 }
-
 static error_t st7789_send_command_repeat(st7789_handle_t handle, st7789_command_t command,
                                           uint8_t *data, uint32_t data_size, uint32_t data_count)
 {
@@ -163,19 +162,18 @@ static error_t st7789_send_command_repeat(st7789_handle_t handle, st7789_command
     st7789_configuration_t *display = &g_st7789_devices[handle].config;
     uint8_t command_message[1] = {command};
 
-
     spi_device_enable(display->spi_handle);
 
     ST7789_COMMAND_MODE(handle);
     spi_write(display->spi_handle, command_message, 1);
 
+    system_timer_stop();
     ST7789_DATA_MODE(handle);
     while (data_count--) {
-        spi_write(display->spi_handle, data, data_size);
+        spi_write_dma(display->spi_handle, data, data_size);
     }
-
     spi_device_disable(display->spi_handle);
-
+    system_timer_start();
     return SUCCESS;
 }
 
@@ -292,6 +290,7 @@ error_t st7789_deinit(st7789_handle_t handle)
     if (st7789_invalid_handle(handle)) {
         return ERROR_INVALID;
     }
+    // TODO: implement
     return SUCCESS;
 }
 
@@ -321,7 +320,6 @@ error_t st7789_draw_filled_rect(st7789_handle_t handle, uint32_t x, uint32_t y, 
     }
 
     uint8_t range[4];
-    st7789_configuration_t *display = &g_st7789_devices[handle].config;
 
     st7789_get_range(0, width, range);
     st7789_send_command(handle, ST7789_COMMAND_CASET, range, 4);
@@ -329,12 +327,12 @@ error_t st7789_draw_filled_rect(st7789_handle_t handle, uint32_t x, uint32_t y, 
     st7789_get_range(0, height, range);
     st7789_send_command(handle, ST7789_COMMAND_RASET, range, 4);
 
-    color16_t buffer[display->width];
-    for (uint32_t i = 0; i < display->width; i++) {
+    color16_t buffer[width];
+    for (uint32_t i = 0; i < width; i++) {
         buffer[i] = color;
     }
     st7789_send_command_repeat(handle, ST7789_COMMAND_RAMWR, (uint8_t *)buffer,
-                               sizeof(color16_t) * display->width, display->height);
+                               sizeof(color16_t) * width, height);
     return SUCCESS;
 }
 
@@ -344,19 +342,6 @@ error_t st7789_clear(st7789_handle_t handle)
         return ERROR_INVALID;
     }
 
-    uint8_t range[4];
-    st7789_configuration_t *display = &g_st7789_devices[handle].config;
-
-    st7789_get_range(0, display->width, range);
-    st7789_send_command(handle, ST7789_COMMAND_CASET, range, 4);
-
-    st7789_get_range(0, display->height, range);
-    st7789_send_command(handle, ST7789_COMMAND_RASET, range, 4);
-
-    color16_t buffer[display->width];
-    memset(buffer, 0xff, sizeof(color16_t) * display->width);
-    st7789_send_command_repeat(handle, ST7789_COMMAND_RAMWR, (uint8_t *)buffer,
-                               sizeof(color16_t) * display->width, display->height);
-
-    return SUCCESS;
+    st7789_configuration_t *config = &g_st7789_devices[handle].config;
+    return st7789_draw_filled_rect(handle, 0, 0, config->width, config->height, 0xffff);
 }

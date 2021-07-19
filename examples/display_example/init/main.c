@@ -3,6 +3,7 @@
 #include <mcu/stm32wb55xx/gpio.h>
 #include <mcu/stm32wb55xx/lpuart.h>
 #include <mcu/stm32wb55xx/spi.h>
+#include <mcu/stm32wb55xx/dma.h>
 #include <mcu/system_timer.h>
 #include <kernel/task/task_manager.h>
 #include <kernel/debug/log.h>
@@ -18,7 +19,13 @@ extern uint32_t _sbss[];
 extern uint32_t _ebss[];
 extern uint32_t interrupt_vector_table[];
 
-uint32_t g_display_task_stack[500] = {0};
+uint32_t g_display_task_stack[700] = {0};
+
+void dma_transfer_complete_handler(dma_handle_t handle)
+{
+    dma_stop(handle);
+    DMA1->IFCR |= 0xfffffff;
+}
 
 void display_task_entry()
 {
@@ -26,8 +33,16 @@ void display_task_entry()
     spi_device_handle_t display_spi_handle;
     gpio_handle_t dc_pin_handle;
     st7789_handle_t display_handle;
+    dma_handle_t spi_dma_handle;
 
     // Initialize display
+    error = dma_init((dma_configuration_t)
+                     {.mode = DMA_MODE_MEMORY_TO_PERIPHERAL,
+                      .request = DMA_REQUEST_SPI1_TX,
+                      .increment_source = true,
+                      .transfer_complete_handler = &dma_transfer_complete_handler},
+                     &spi_dma_handle);
+
     error = spi_device_init((spi_device_configuration_t)
                             {.spi = SPI1,
                              .cs_port = GPIOB,
@@ -38,7 +53,8 @@ void display_task_entry()
                              .significant_bit = SPI_SIGNIFICANT_BIT_MSB,
                              .com_mode = SPI_COM_MODE_FULL_DUPLEX,
                              .data_size = SPI_DATA_SIZE_8BIT,
-                             .active_low = true},
+                             .active_low = true,
+                             .dma_handle = spi_dma_handle},
                             &display_spi_handle);
     if (error) {
         log_error(error, "Failed to configure spi device for bluefruit device");
@@ -68,13 +84,14 @@ void display_task_entry()
     }
 
     st7789_clear(display_handle);
+    task_manager_task_wait_ms(500);
     while (1) {
         st7789_draw_filled_rect(display_handle, 0, 0, 240, 240, 0xF800);
-        task_manager_task_wait_ms(500);
+        task_manager_task_wait_ms(250);
         st7789_draw_filled_rect(display_handle, 0, 0, 240, 240, 0x07E0);
-        task_manager_task_wait_ms(500);
+        task_manager_task_wait_ms(250);
         st7789_draw_filled_rect(display_handle, 0, 0, 240, 240, 0x001F);
-        task_manager_task_wait_ms(500);
+        task_manager_task_wait_ms(250);
     }
 }
 
@@ -90,6 +107,8 @@ void main()
     rcc_enable_spi1_clock();
     rcc_enable_gpioa_clock();
     rcc_enable_gpiob_clock();
+    rcc_enable_dma1_clock();
+    rcc_enable_dmamux1_clock();
 
     // Initialize LPUART interface
     lpuart_init((lpuart_configuration_t)
@@ -108,7 +127,7 @@ void main()
     log_init((log_configuration_t)
              {.lpuart_handle = lpuart_handle});
 
-    log_info("Display Example! %x %x %x", RCC->CFGR, RCC->CR, RCC->PLLCFGR);
+    //log_info("Display Example! %x %x %x", RCC->CFGR, RCC->CR, RCC->PLLCFGR);
 
     // Initialize SPI interface
     error = spi_interface_init((spi_interface_configuration_t)

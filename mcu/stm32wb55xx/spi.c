@@ -8,6 +8,7 @@
 #include <mcu/stm32wb55xx/spi.h>
 #include <mcu/stm32wb55xx/rcc.h>
 #include <mcu/stm32wb55xx/gpio.h>
+#include <mcu/stm32wb55xx/dma.h>
 
 
 #ifndef CONFIG_SPI_DEVICE_MAX
@@ -214,6 +215,12 @@ error_t spi_read(spi_device_handle_t handle, void *buffer, uint32_t length)
     return SUCCESS;
 }
 
+error_t spi_read_dma(spi_device_handle_t handle, void *buffer, uint32_t length)
+{
+    // TODO: Implement
+    return SUCCESS;
+}
+
 error_t spi_write(spi_device_handle_t handle, void *data, uint32_t length)
 {
     if (spi_invalid_handle(handle)) {
@@ -229,8 +236,21 @@ error_t spi_write(spi_device_handle_t handle, void *data, uint32_t length)
     while (length--) {
         while (!spi_tx_buffer_empty(spi)) {}
         *(uint8_t *)&spi->DR = *d++;
-        //spi_transmit_8bit(spi, *d++);
     }
+
+    return SUCCESS;
+}
+
+error_t spi_write_dma(spi_device_handle_t handle, void *data, uint32_t length)
+{
+    if (spi_invalid_handle(handle)) {
+        return ERROR_INVALID;
+    }
+
+    spi_device_configuration_t config = g_spi_devices[handle].config;
+
+    dma_start(config.dma_handle, (uint32_t)&config.spi->DR, (uint32_t)data, length);
+    config.spi->CR2 |= SPI_CR2_TXDMAEN;
 
     return SUCCESS;
 }

@@ -90,6 +90,12 @@ void rcc_disable_i2c1_clock();
 void rcc_enable_i2c3_clock();
 void rcc_disable_i2c3_clock();
 
+void rcc_enable_dma1_clock();
+void rcc_disable_dma1_clock();
+
+void rcc_enable_dmamux1_clock();
+void rcc_disable_dmamux1_clock();
+
 void rcc_disable_interrupts();
 
 void rcc_backup_domain_reset();

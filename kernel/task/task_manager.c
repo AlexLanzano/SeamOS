@@ -16,7 +16,7 @@ static task_handle_t g_idle_task_handle = 0;
 
 static void idle_task_entry()
 {
-    log_info("IDLE TASK!");
+    //log_info("IDLE TASK!");
     while(1);
 }
 

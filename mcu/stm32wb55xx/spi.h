@@ -3,6 +3,7 @@
 
 #include <mcu/stm32wb55xx/stm32wb55xx.h>
 #include <mcu/stm32wb55xx/gpio.h>
+#include <mcu/stm32wb55xx/dma.h>
 #include <stdbool.h>
 #include <mcu/spi.h>
 #include <libraries/error.h>
@@ -80,6 +81,7 @@ typedef struct spi_device_configuration {
     spi_com_mode_t com_mode;
     spi_data_size_t data_size;
     bool active_low;
+    dma_handle_t dma_handle;
 } spi_device_configuration_t;
 
 #endif

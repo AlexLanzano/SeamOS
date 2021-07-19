@@ -229,6 +229,26 @@ void rcc_disable_i2c3_clock()
     RCC->APB1ENR1 &= ~RCC_APB1ENR1_I2C3EN;
 }
 
+void rcc_enable_dma1_clock()
+{
+    RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
+}
+
+void rcc_disable_dma1_clock()
+{
+    RCC->AHB1ENR &= ~RCC_AHB1ENR_DMA1EN;
+}
+
+void rcc_enable_dmamux1_clock()
+{
+    RCC->AHB1ENR |= RCC_AHB1ENR_DMAMUX1EN;
+}
+
+void rcc_disable_dmamux1_clock()
+{
+    RCC->AHB1ENR &= ~RCC_AHB1ENR_DMAMUX1EN;
+}
+
 void rcc_disable_interrupts()
 {
     RCC->CIER = 0x00000000;

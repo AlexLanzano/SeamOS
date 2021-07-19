@@ -16,7 +16,10 @@ error_t spi_device_enable(spi_device_handle_t handle);
 error_t spi_device_disable(spi_device_handle_t handle);
 error_t spi_read_write(spi_device_handle_t handle, void *rdata, uint8_t wdata, uint32_t length);
 error_t spi_read(spi_device_handle_t handle, void *buffer, uint32_t length);
+error_t spi_read_dma(spi_device_handle_t handle, void *buffer, uint32_t length);
 error_t spi_write(spi_device_handle_t handle, void *data, uint32_t length);
+error_t spi_write_dma(spi_device_handle_t handle, void *data, uint32_t length);
+
 
 error_t spi_interface_init(spi_interface_configuration_t config, spi_interface_handle_t *handle);
 error_t spi_interface_deinit(spi_interface_handle_t handle);
