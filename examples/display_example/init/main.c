@@ -127,7 +127,7 @@ void main()
     log_init((log_configuration_t)
              {.lpuart_handle = lpuart_handle});
 
-    //log_info("Display Example! %x %x %x", RCC->CFGR, RCC->CR, RCC->PLLCFGR);
+    log_info("Display Example!");
 
     // Initialize SPI interface
     error = spi_interface_init((spi_interface_configuration_t)
