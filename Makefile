@@ -34,6 +34,7 @@ DEPENDS = $(patsubst %.c,$(DEPDIR)/%.d,$(SEAMOS_KERNEL_SOURCE)) \
 
 all: config.h $(SEAMOS_LIB)
 
+.PHONY: config.h
 config.h: $(CONFIG)
 	scripts/generate_config_header.py $(CONFIG)
 
