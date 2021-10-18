@@ -1,7 +1,7 @@
 #ifndef SPI_H
 #define SPI_H
 
-#include <stdbool.h>
+#include <stdint.h>
 #include <libraries/error.h>
 
 typedef struct spi_interface_configuration spi_interface_configuration_t;

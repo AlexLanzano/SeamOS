@@ -46,15 +46,22 @@ typedef enum rcc_rtc_clock_source {
     RCC_RTC_CLOCK_SOURCE_HSE
 } rcc_rtc_clock_source_t;
 
+typedef enum rcc_sai_clock_source {
+    RCC_SAI_CLOCK_SOURCE_PLLSAI,
+    RCC_SAI_CLOCK_SOURCE_PLL,
+    RCC_SAI_CLOCK_SOURCE_HSI16,
+    RCC_SAI_CLOCK_SOURCE_SAI_EXTCLK
+} rcc_sai_clock_source_t;
+
 void rcc_reset();
 
 void rcc_set_msi_clock_speed(uint32_t msi_clock_speed);
 void rcc_set_pll_clock_speed(uint32_t pll_clock_speed);
-
+void rcc_set_pllp_division_factor(uint32_t pllp_division_factor);
 void rcc_set_system_clock_source(rcc_system_clock_source_t system_clock_source);
 void rcc_set_lpuart1_clock_source(rcc_lpuart_clock_source_t lpuart_clock_source);
 void rcc_set_rtc_clock_source(rcc_rtc_clock_source_t rcc_clock_source);
-
+void rcc_set_sai1_clock_source(rcc_sai_clock_source_t sai_clock_source);
 uint32_t rcc_get_system_clock_speed();
 
 void rcc_enable_msi_clock();
@@ -95,6 +102,9 @@ void rcc_disable_dma1_clock();
 
 void rcc_enable_dmamux1_clock();
 void rcc_disable_dmamux1_clock();
+
+void rcc_enable_sai1_clock();
+void rcc_disable_sai1_clock();
 
 void rcc_disable_interrupts();
 

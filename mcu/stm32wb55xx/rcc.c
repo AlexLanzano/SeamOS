@@ -82,9 +82,9 @@ void rcc_set_pll_clock_speed(uint32_t pll_clock_speed)
     switch (pll_clock_speed) {
     case 64000000:
         RCC->CR &= ~(RCC_CR_MSIRANGE);
-        RCC->CR |= RCC_MSI_CLOCK_SPEED_16MHz << RCC_CR_MSIRANGE_Pos;
-        RCC->PLLCFGR &= ~RCC_PLLCFGR_PLLN_Msk;
-        RCC->PLLCFGR |= ((8 << RCC_PLLCFGR_PLLN_Pos) |
+        RCC->CR |= RCC_MSI_CLOCK_SPEED_4MHz << RCC_CR_MSIRANGE_Pos;
+        RCC->PLLCFGR &= ~RCC_PLLCFGR_PLLN;
+        RCC->PLLCFGR |= ((32 << RCC_PLLCFGR_PLLN_Pos) |
                          (0 << RCC_PLLCFGR_PLLM_Pos) |
                          (1 << RCC_PLLCFGR_PLLR_Pos) |
                          (1 << RCC_PLLCFGR_PLLSRC_Pos) |
@@ -92,6 +92,14 @@ void rcc_set_pll_clock_speed(uint32_t pll_clock_speed)
         break;
     }
     rcc_enable_pll_clock();
+}
+
+void rcc_set_pllp_division_factor(uint32_t pllp_division_factor)
+{
+    RCC->PLLCFGR &= ~RCC_PLLCFGR_PLLP;
+    RCC->PLLCFGR |= ((pllp_division_factor-1) << RCC_PLLCFGR_PLLP_Pos |
+                     1 << RCC_PLLCFGR_PLLPEN_Pos);
+
 }
 
 void rcc_set_system_clock_source(rcc_system_clock_source_t system_clock_source)
@@ -107,10 +115,17 @@ void rcc_set_lpuart1_clock_source(rcc_lpuart_clock_source_t lpuart_clock_source)
     RCC->CCIPR |= lpuart_clock_source << RCC_CCIPR_LPUART1SEL_Pos;
 }
 
-void rcc_set_rtc_clock_source(rcc_rtc_clock_source_t rcc_clock_source)
+void rcc_set_rtc_clock_source(rcc_rtc_clock_source_t rtc_clock_source)
 {
     RCC->BDCR &= ~(RCC_BDCR_RTCSEL);
-    RCC->BDCR |= rcc_clock_source << RCC_BDCR_RTCSEL_Pos;
+    RCC->BDCR |= rtc_clock_source << RCC_BDCR_RTCSEL_Pos;
+}
+
+void rcc_set_sai1_clock_source(rcc_sai_clock_source_t sai_clock_source)
+{
+    RCC->CCIPR &= ~(RCC_CCIPR_SAI1SEL);
+    RCC->CCIPR |= sai_clock_source << RCC_CCIPR_SAI1SEL_Pos;
+
 }
 
 uint32_t g_msi_clock_speeds[] =
@@ -247,6 +262,16 @@ void rcc_enable_dmamux1_clock()
 void rcc_disable_dmamux1_clock()
 {
     RCC->AHB1ENR &= ~RCC_AHB1ENR_DMAMUX1EN;
+}
+
+void rcc_enable_sai1_clock()
+{
+    RCC->APB2ENR |= RCC_APB2ENR_SAI1EN;
+}
+
+void rcc_disable_sai1_clock()
+{
+    RCC->APB2ENR &= ~RCC_APB2ENR_SAI1EN;
 }
 
 void rcc_disable_interrupts()

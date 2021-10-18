@@ -7,7 +7,7 @@ CONFIG ?= config
 SEAMOS_LIB ?= SeamOS.a
 
 INCLUDE = -I. -Imcu/$(MCU)/include
-CFLAGS = -Wall -Werror -c -ffreestanding -nostdlib $(MCU_CFLAGS) $(INCLUDE) -g \
+CFLAGS = -Wall -Werror -c -ffreestanding -nostdlib $(MCU_CFLAGS) $(INCLUDE) -g3 \
          -MMD -MF $(DEPDIR)/$*.d
 
 DEPDIR = .deps/

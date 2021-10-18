@@ -68,7 +68,7 @@ static error_t gpio_set_alternative_function(GPIO_TypeDef *gpio_port, uint8_t pi
     if (pin < 8) {
         gpio_port->AFR[0] |= alternative_function << (pin << 2);
     } else {
-        gpio_port->AFR[1] |= alternative_function << (pin << 2);
+        gpio_port->AFR[1] |= alternative_function << ((pin-8) << 2);
     }
 
     return SUCCESS;
