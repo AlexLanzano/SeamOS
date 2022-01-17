@@ -51,24 +51,46 @@ void arch_disable_irq()
     __disable_irq();
 }
 
+void __attribute__((weak)) system_call_handler(uint32_t system_call, uint32_t *system_call_args)
+{
+    return;
+}
+
+void SVC_Handler_Main(uint32_t *svc_args)
+{
+    uint32_t svc_number;
+    svc_number = ((char *)svc_args[6])[-2];
+    if (svc_number == 0) {
+        asm volatile("    ldr r3, current_task2    \n"
+                     "    ldr r0, [r3]             \n"
+                     "    add r0, #36              \n"
+                     "    msr psp, r0              \n"
+                     "    isb                      \n"
+                     "    pop {r0-r5}              \n"
+                     "    mov lr, r5               \n"
+                     "    pop {r3}                 \n"
+                     "    pop {r2}                 \n"
+                     "    ldr lr, address\n"
+                     "    bx lr                    \n"
+                     "                             \n"
+                     "    .align 4                 \n"
+                     "current_task2: .word g_current_task \n"
+                     "address: .word 0xfffffffd \n"
+                     ::);
+    }
+    system_call_handler(svc_number, svc_args);
+}
+
 void __attribute__((naked)) SVC_Handler()
 {
-    asm volatile("    ldr r3, current_task2    \n"
-                 "    ldr r0, [r3]             \n"
-                 "    add r0, #36              \n"
-                 "    msr psp, r0              \n"
-                 "    isb                      \n"
-                 "    pop {r0-r5}              \n"
-                 "    mov lr, r5               \n"
-                 "    pop {r3}                 \n"
-                 "    pop {r2}                 \n"
-                 "    ldr lr, address\n"
-                 "    bx lr                    \n"
-                 "                             \n"
-                 "    .align 4                 \n"
-                 "current_task2: .word g_current_task \n"
-                 "address: .word 0xfffffffd \n"
-                 ::);
+    asm(".global SVC_Handler_Main\n"
+        "tst lr, #4\n"
+        "ite EQ\n"
+        "mrseq r0, MSP\n"
+        "mrsne r0, PSP\n"
+        "b SVC_Handler_Main\n"
+        :
+        :);
 }
 
 void __attribute__((naked)) PendSV_Handler()

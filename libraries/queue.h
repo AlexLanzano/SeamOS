@@ -1,6 +1,7 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
+#include <stdint.h>
 #include <libraries/error.h>
 
 typedef uint32_t queue_handle_t;
