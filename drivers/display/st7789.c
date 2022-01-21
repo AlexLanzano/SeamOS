@@ -336,6 +336,29 @@ error_t st7789_draw_filled_rect(st7789_handle_t handle, uint32_t x, uint32_t y, 
     return SUCCESS;
 }
 
+error_t st7789_draw_rect(st7789_handle_t handle, uint32_t x, uint32_t y, uint32_t width, uint32_t height, color16_t *data)
+{
+    if (st7789_invalid_handle(handle)) {
+        return ERROR_INVALID;
+    }
+
+    uint8_t range[4];
+
+    st7789_get_range(0, width, range);
+    st7789_send_command(handle, ST7789_COMMAND_CASET, range, 4);
+
+    st7789_get_range(0, height, range);
+    st7789_send_command(handle, ST7789_COMMAND_RASET, range, 4);
+
+    color16_t *buffer = data;
+    for (uint32_t i = 0; i < height; i++) {
+        st7789_send_command(handle, ST7789_COMMAND_RAMWR, (uint8_t *)buffer, sizeof(color16_t) * width);
+        buffer += g_st7789_devices[handle].config.width;
+    }
+
+    return SUCCESS;
+}
+
 error_t st7789_clear(st7789_handle_t handle)
 {
     if (st7789_invalid_handle(handle)) {

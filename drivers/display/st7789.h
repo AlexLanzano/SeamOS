@@ -26,6 +26,7 @@ error_t st7789_deinit(st7789_handle_t handle);
 error_t st7789_render(st7789_handle_t handle);
 error_t st7789_draw_pixel(st7789_handle_t handle, uint32_t x, uint32_t y, color16_t color);
 error_t st7789_draw_filled_rect(st7789_handle_t handle, uint32_t x, uint32_t y, uint32_t width, uint32_t height, color16_t color);
+error_t st7789_draw_rect(st7789_handle_t handle, uint32_t x, uint32_t y, uint32_t width, uint32_t height, color16_t *data);
 error_t st7789_clear(st7789_handle_t handle);
 
 #endif

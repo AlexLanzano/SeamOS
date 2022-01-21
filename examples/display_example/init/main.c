@@ -57,7 +57,7 @@ void display_task_entry()
                              .dma_handle = spi_dma_handle},
                             &display_spi_handle);
     if (error) {
-        log_error(error, "Failed to configure spi device for bluefruit device");
+        log_error(error, "Failed to configure spi device for display device");
         while(1);
     }
 
