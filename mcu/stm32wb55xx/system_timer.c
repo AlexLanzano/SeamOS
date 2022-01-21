@@ -50,5 +50,7 @@ void system_timer_wait_ms(uint32_t ms)
 void SysTick_Handler()
 {
     tick_count++;
-    arch_context_switch();
+    if (task_manager_started()) {
+        arch_context_switch();
+    }
 }

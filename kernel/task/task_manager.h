@@ -38,5 +38,6 @@ error_t task_manager_deinit_task(task_handle_t handle);
 void task_manager_task_wait_ms(uint32_t ms);
 error_t task_manager_block_task(task_handle_t handle);
 error_t task_manager_unblock_task(task_handle_t handle);
+bool task_manager_started();
 
 #endif

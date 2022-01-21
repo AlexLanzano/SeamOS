@@ -13,6 +13,7 @@ uint32_t g_idle_task_stack[500] = {0};
 static queue_handle_t g_task_queue_handle;
 static task_t g_tasks[CONFIG_TASK_MAX] = {0};
 static task_handle_t g_idle_task_handle = 0;
+static bool g_task_manager_started = false;
 
 static void idle_task_entry()
 {
@@ -53,6 +54,7 @@ error_t task_manager_deinit()
 
 void task_manager_start()
 {
+    g_task_manager_started = true;
     system_timer_start();
     arch_disable_irq();
     queue_pop(g_task_queue_handle, &g_current_task);
@@ -137,4 +139,9 @@ error_t task_manager_unblock_task(task_handle_t handle)
 {
     // TODO: Implement
     return SUCCESS;
+}
+
+bool task_manager_started()
+{
+    return g_task_manager_started;
 }
