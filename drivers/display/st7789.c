@@ -140,8 +140,8 @@ static error_t st7789_send_command(st7789_handle_t handle, st7789_command_t comm
     spi_device_enable(display->spi_handle);
 
     ST7789_COMMAND_MODE(handle);
-    spi_write(display->spi_handle, command_message, 1);
 
+    spi_write(display->spi_handle, command_message, 1);
     ST7789_DATA_MODE(handle);
     if (data_size) {
         spi_write(display->spi_handle, data, data_size);
@@ -171,6 +171,32 @@ static error_t st7789_send_command_repeat(st7789_handle_t handle, st7789_command
     ST7789_DATA_MODE(handle);
     while (data_count--) {
         spi_write_dma(display->spi_handle, data, data_size);
+    }
+    spi_device_disable(display->spi_handle);
+    system_timer_start();
+    return SUCCESS;
+}
+
+static error_t st7789_render_framebuffer(st7789_handle_t handle, uint8_t *data, uint32_t width, uint32_t height)
+{
+    if (st7789_invalid_handle(handle) ||
+        (!data)) {
+        return ERROR_INVALID;
+    }
+
+    st7789_configuration_t *display = &g_st7789_devices[handle].config;
+    uint8_t command_message[1] = {ST7789_COMMAND_RAMWR};
+
+    spi_device_enable(display->spi_handle);
+
+    ST7789_COMMAND_MODE(handle);
+    spi_write(display->spi_handle, command_message, 1);
+
+    system_timer_stop();
+    ST7789_DATA_MODE(handle);
+    while (height--) {
+        spi_write_dma(display->spi_handle, data, sizeof(color16_t) * width);
+        data += sizeof(color16_t) * display->width;
     }
     spi_device_disable(display->spi_handle);
     system_timer_start();
@@ -344,17 +370,13 @@ error_t st7789_draw_rect(st7789_handle_t handle, uint32_t x, uint32_t y, uint32_
 
     uint8_t range[4];
 
-    st7789_get_range(0, width, range);
+    st7789_get_range(x, width+x, range);
     st7789_send_command(handle, ST7789_COMMAND_CASET, range, 4);
 
-    st7789_get_range(0, height, range);
+    st7789_get_range(y, height+y, range);
     st7789_send_command(handle, ST7789_COMMAND_RASET, range, 4);
 
-    color16_t *buffer = data;
-    for (uint32_t i = 0; i < height; i++) {
-        st7789_send_command(handle, ST7789_COMMAND_RAMWR, (uint8_t *)buffer, sizeof(color16_t) * width);
-        buffer += g_st7789_devices[handle].config.width;
-    }
+    st7789_render_framebuffer(handle, (uint8_t *)data, width, height);
 
     return SUCCESS;
 }
