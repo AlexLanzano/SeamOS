@@ -194,25 +194,33 @@ static error_t st7789_render_framebuffer(st7789_handle_t handle, uint8_t *data, 
 
     system_timer_stop();
     ST7789_DATA_MODE(handle);
+
     while (height--) {
         spi_write_dma(display->spi_handle, data, sizeof(color16_t) * width);
         data += sizeof(color16_t) * display->width;
     }
+
     spi_device_disable(display->spi_handle);
     system_timer_start();
     return SUCCESS;
 }
 
-static error_t st7789_get_range(uint16_t start, uint16_t end, uint8_t *range)
+static error_t st7789_set_frame_address(st7789_handle_t handle, uint16_t x0, uint16_t x1, uint16_t y0, uint16_t y1)
 {
-    if (!range) {
-        return ERROR_INVALID;
+    error_t error;
+
+    uint8_t x_bound[4] = {x0 >> 8, x0 & 0xFF, x1 >> 8, x1 & 0xFF};
+    uint8_t y_bound[4] = {y0 >> 8, y0 & 0xFF, y1 >> 8, y1 & 0xFF};
+
+    error = st7789_send_command(handle, ST7789_COMMAND_CASET, x_bound, 4);
+    if (error) {
+        return error;
     }
 
-    range[0] = (start >> 8) & 0xff;
-    range[1] = start & 0xff;
-    range[2] = (end >> 8) & 0xff;
-    range[3] = end & 0xff;
+    error = st7789_send_command(handle, ST7789_COMMAND_RASET, y_bound, 4);
+    if (error) {
+        return error;
+    }
 
     return SUCCESS;
 }
@@ -268,20 +276,9 @@ error_t st7789_init(st7789_configuration_t config, st7789_handle_t *handle)
         return error;
     }
 
-    // Set column range
-    uint8_t range[4];
-    st7789_get_range(0, config.width, range);
-    error = st7789_send_command(*handle, ST7789_COMMAND_CASET, range, 4);
+    error = st7789_set_frame_address(*handle, 0, 0, config.width-1, config.height-1);
     if (error) {
-        log_error(error, "Failed to set column range");
-        return error;
-    }
-
-    // Set row range
-    st7789_get_range(0, config.height, range);
-    error = st7789_send_command(*handle, ST7789_COMMAND_RASET, range, 4);
-    if (error) {
-        log_error(error, "Failed to set row range");
+        log_error(error, "Failed to set frame address");
         return error;
     }
 
@@ -326,13 +323,7 @@ error_t st7789_draw_pixel(st7789_handle_t handle, uint32_t x, uint32_t y, color1
         return ERROR_INVALID;
     }
 
-    uint8_t range[4];
-
-    st7789_get_range(x, x, range);
-    st7789_send_command(handle, ST7789_COMMAND_CASET, range, 4);
-
-    st7789_get_range(y, y, range);
-    st7789_send_command(handle, ST7789_COMMAND_RASET, range, 4);
+    st7789_set_frame_address(handle, x, x, y, y);
 
     st7789_send_command(handle, ST7789_COMMAND_RAMWR, (uint8_t *)&color, 2);
 
@@ -345,13 +336,7 @@ error_t st7789_draw_filled_rect(st7789_handle_t handle, uint32_t x, uint32_t y, 
         return ERROR_INVALID;
     }
 
-    uint8_t range[4];
-
-    st7789_get_range(0, width, range);
-    st7789_send_command(handle, ST7789_COMMAND_CASET, range, 4);
-
-    st7789_get_range(0, height, range);
-    st7789_send_command(handle, ST7789_COMMAND_RASET, range, 4);
+    st7789_set_frame_address(handle, x, x+width-1, y, y+height-1);
 
     color16_t buffer[width];
     for (uint32_t i = 0; i < width; i++) {
@@ -368,14 +353,7 @@ error_t st7789_draw_rect(st7789_handle_t handle, uint32_t x, uint32_t y, uint32_
         return ERROR_INVALID;
     }
 
-    uint8_t range[4];
-
-    st7789_get_range(x, width+x, range);
-    st7789_send_command(handle, ST7789_COMMAND_CASET, range, 4);
-
-    st7789_get_range(y, height+y, range);
-    st7789_send_command(handle, ST7789_COMMAND_RASET, range, 4);
-
+    st7789_set_frame_address(handle, x, x+width-1, y, y+height-1);
     st7789_render_framebuffer(handle, (uint8_t *)data, width, height);
 
     return SUCCESS;
