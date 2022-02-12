@@ -29,12 +29,12 @@ static void log_print(char *format, va_list ap)
 
     string_format(&msg, format_string, ap);
 
-    lpuart_write(g_lpuart_handle, (uint8_t *)string_data(msg), string_size(msg));
+    lpuart_write(g_lpuart_handle, (uint8_t *)string_data(msg), string_size(msg)-1);
 }
 
 void log(log_level_t log_level, char *format, ...)
 {
-    if (g_log_level < log_level || !format) {
+    if (g_log_level < log_level || !format || format[0] == 0) {
         return;
     }
     va_list ap;
@@ -45,7 +45,7 @@ void log(log_level_t log_level, char *format, ...)
 
 void log_error(error_t error, char *format, ...)
 {
-    if (g_log_level < LOG_LEVEL_ERROR || !format) {
+    if (g_log_level < LOG_LEVEL_ERROR || !format || format[0] == 0) {
         return;
     }
 
@@ -60,7 +60,7 @@ void log_error(error_t error, char *format, ...)
 
 void log_info(char *format, ...)
 {
-    if (g_log_level < LOG_LEVEL_INFO || !format) {
+    if (g_log_level < LOG_LEVEL_INFO || !format || format[0] == 0) {
         return;
     }
 
@@ -75,7 +75,7 @@ void log_info(char *format, ...)
 
 void log_debug(char *format, ...)
 {
-    if (g_log_level < LOG_LEVEL_DEBUG || !format) {
+    if (g_log_level < LOG_LEVEL_DEBUG || !format || format[0] == 0) {
         return;
     }
 
