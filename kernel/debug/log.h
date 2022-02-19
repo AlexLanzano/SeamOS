@@ -18,10 +18,10 @@ typedef struct log_configuration {
     lpuart_handle_t lpuart_handle;
 } log_configuration_t;
 
-void log(log_level_t log_level, char *format, ...);
-void log_error(error_t error, char *format, ...);
-void log_info(char *format, ...);
-void log_debug(char *format, ...);
+void log(log_level_t log_level, const char *format, ...);
+void log_error(error_t error, const char *format, ...);
+void log_info(const char *format, ...);
+void log_debug(const char *format, ...);
 void log_init(log_configuration_t config);
 
 #endif

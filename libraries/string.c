@@ -186,23 +186,34 @@ void *memmove32(void *dest, const void *source, uint32_t size)
     return dest;
 }
 
-string_t string(char *cstring)
+string_t string_init(char *data, uint32_t capacity)
 {
-    uint32_t cstring_size = string_cstring_size(cstring);
-    string_t string =
-        {.error = (cstring == 0) ? ERROR_INVALID : SUCCESS,
-        .data = cstring,
-        .size = cstring_size,
-        .capacity = cstring_size};
-    return string;
-}
-
-string_t string_init(char *data, uint32_t size, uint32_t capacity)
-{
+    memset(data, 0, capacity);
     string_t string =
         {.error = (data == 0) ? ERROR_INVALID : SUCCESS,
         .data = data,
-        .size = size,
+        .size = 0,
+        .capacity = capacity};
+    return string;
+}
+
+string_t string_init_from_cstring(char *data, const char *cstring, uint32_t capacity)
+{
+    uint32_t string_size = 0;
+    for (string_size = 0; string_size < capacity; string_size++) {
+        if (cstring[string_size] == 0) {
+            break;
+        }
+
+        data[string_size] = cstring[string_size];
+    }
+
+    data[string_size] = 0;
+
+    string_t string =
+        {.error = (cstring == 0) ? ERROR_INVALID : SUCCESS,
+        .data = data,
+        .size = string_size,
         .capacity = capacity};
     return string;
 }
@@ -218,7 +229,9 @@ uint32_t string_size(string_t string)
 uint32_t string_cstring_size(const char *cstring)
 {
     uint32_t count = 0;
-    while(cstring[count++]);
+    while (cstring[count]) {
+        count++;
+    }
     return count;
 }
 
@@ -269,13 +282,14 @@ string_t *string_copy(string_t *dest, string_t source)
         return dest;
     }
     if (!string_is_valid(*dest) || !string_is_valid(source) ||
-        dest->capacity < source.size) {
+        dest->capacity-1 < source.size) {
         dest->error = ERROR_INVALID;
         return dest;
     }
 
     memcpy(dest->data, source.data, source.size);
     dest->size = source.size;
+    dest->data[dest->size] = 0;
 
     return dest;
 }
@@ -286,13 +300,14 @@ string_t *string_copy_cstring(string_t *dest, const char *cstring, uint32_t cstr
         return dest;
     }
     if (!string_is_valid(*dest) ||
-        dest->capacity < cstring_size) {
+        dest->capacity-1 < cstring_size) {
         dest->error = ERROR_INVALID;
         return dest;
     }
 
     memcpy(dest->data, cstring, cstring_size);
     dest->size = cstring_size;
+    dest->data[dest->size] = 0;
 
     return dest;
 }
@@ -303,13 +318,14 @@ string_t *string_append(string_t *dest, char c)
         return dest;
     }
     if (!string_is_valid(*dest) ||
-        dest->size == dest->capacity) {
+        dest->size == dest->capacity-1) {
         dest->error = ERROR_INVALID;
         return dest;
     }
 
     dest->data[dest->size] = c;
     dest->size++;
+    dest->data[dest->size] = 0;
 
     return dest;
 }
@@ -320,13 +336,14 @@ string_t *string_concatenate(string_t *dest, string_t source)
         return dest;
     }
     if (!string_is_valid(*dest) ||
-        dest->size + source.size > dest->capacity) {
+        dest->size + source.size > dest->capacity-1) {
         dest->error = ERROR_INVALID;
         return dest;
     }
 
     memcpy(&dest->data[dest->size], source.data, source.size);
     dest->size += source.size;
+    dest->data[dest->size] = 0;
 
     return dest;
 }
@@ -337,13 +354,14 @@ string_t *string_concatenate_reverse(string_t *dest, string_t source)
         return dest;
     }
     if (!string_is_valid(*dest) ||
-        dest->size + source.size > dest->capacity) {
+        dest->size + source.size > dest->capacity-1) {
         dest->error = ERROR_INVALID;
         return dest;
     }
 
     memcpy_reverse(&dest->data[dest->size], source.data, source.size);
     dest->size += source.size;
+    dest->data[dest->size] = 0;
 
     return dest;
 }
@@ -355,13 +373,14 @@ string_t *string_concatenate_cstring(string_t *dest, const char *cstring, uint32
     }
 
     if (!string_is_valid(*dest) ||
-        dest->size + cstring_size > dest->capacity) {
+        dest->size + cstring_size > dest->capacity-1) {
         dest->error = ERROR_INVALID;
         return dest;
     }
 
     memcpy(&dest->data[dest->size], cstring, cstring_size);
     dest->size += cstring_size;
+    dest->data[dest->size] = 0;
 
     return dest;
 }
@@ -379,11 +398,11 @@ string_t *string_format(string_t *dest, string_t format, va_list ap)
 
     uint32_t u;
     int32_t d;
-    string_t s;
+    char *s;
     int c;
 
     char zero_padding_string_data[UINT_STRING_MAX];
-    string_t zero_padding_string = string_init(zero_padding_string_data, 0, UINT_STRING_MAX);
+    string_t zero_padding_string = string_init(zero_padding_string_data, UINT_STRING_MAX);
     uint32_t zero_padding = 0;
 
     uint32_t state = 0;
@@ -406,7 +425,7 @@ string_t *string_format(string_t *dest, string_t format, va_list ap)
 
             if (ch == 'u') {
                 char uint_string_data[UINT_STRING_MAX];
-                string_t uint_string = string_init(uint_string_data, 0, UINT_STRING_MAX);
+                string_t uint_string = string_init(uint_string_data, UINT_STRING_MAX);
                 u = va_arg(ap, uint32_t);
 
                 uint_string = string_uint_to_string(uint_string, u, zero_padding, 10);
@@ -419,7 +438,7 @@ string_t *string_format(string_t *dest, string_t format, va_list ap)
             if (ch == 'i' ||
                 ch == 'd') {
                 char int_string_data[UINT_STRING_MAX];
-                string_t int_string = string_init(int_string_data, 0, UINT_STRING_MAX);
+                string_t int_string = string_init(int_string_data, UINT_STRING_MAX);
                 d = va_arg(ap, int32_t);
 
                 int_string = string_int_to_string(int_string, d, zero_padding, 10);
@@ -431,7 +450,7 @@ string_t *string_format(string_t *dest, string_t format, va_list ap)
 
             if (ch == 'x') {
                 char hex_string_data[UINT_STRING_MAX];
-                string_t hex_string = string_init(hex_string_data, 0, UINT_STRING_MAX);
+                string_t hex_string = string_init(hex_string_data, UINT_STRING_MAX);
                 u = va_arg(ap, uint32_t);
 
                 hex_string = string_uint_to_string(hex_string, u, zero_padding, 16);
@@ -442,8 +461,8 @@ string_t *string_format(string_t *dest, string_t format, va_list ap)
             }
 
             if (ch == 's') {
-                s = va_arg(ap, string_t);
-                dest = string_concatenate(dest, s);
+                s = va_arg(ap, char *);
+                dest = string_concatenate_cstring(dest, s, string_cstring_size(s));
                 if (dest->error) {
                     break;
                 }
@@ -529,7 +548,7 @@ string_t string_uint_to_string(string_t dest, uint32_t u, uint32_t zero_padding,
     }
 
     char digit_string_data[UINT_STRING_MAX];
-    string_t digit_string = string_init(digit_string_data, 0, UINT_STRING_MAX);
+    string_t digit_string = string_init(digit_string_data, UINT_STRING_MAX);
     do {
         uint8_t digit = u % base;
         string_append(&digit_string, g_char_lut[digit]);
@@ -567,24 +586,5 @@ string_t string_int_to_string(string_t dest, int32_t i, uint32_t zero_padding, u
     }
 
     string_append(&dest, '-');
-
-    char digit_string_data[UINT_STRING_MAX];
-    string_t digit_string = string_init(digit_string_data, 0, UINT_STRING_MAX);
-    do {
-        uint8_t digit = i % base;
-        string_append(&digit_string, g_char_lut[digit]);
-        if (digit_string.error) {
-            dest.error = digit_string.error;
-            return dest;
-        }
-        i -= digit;
-        i /= base;
-        if (zero_padding) {
-            zero_padding--;
-        }
-    } while (i || zero_padding);
-
-    string_concatenate_reverse(&dest, digit_string);
-
-    return dest;
+    return string_uint_to_string(dest, -i, zero_padding, base);
 }

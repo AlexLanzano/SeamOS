@@ -31,8 +31,8 @@ void *memcpy_reverse32(void *dest, const void *source, uint32_t size);
 int memcmp32(const void *mem1, const void *mem2, uint32_t size);
 void *memmove32(void *dest, const void *source, uint32_t size);
 
-string_t string(char *cstring);
-string_t string_init(char *data, uint32_t size, uint32_t capacity);
+string_t string_init(char *data, uint32_t capacity);
+string_t string_init_from_cstring(char *data, const char *cstring, uint32_t capacity);
 
 uint32_t string_size(const string_t string);
 uint32_t string_cstring_size(const char *cstring);
@@ -47,6 +47,7 @@ string_t *string_copy_cstring(string_t *dest, const char *cstring, uint32_t cstr
 string_t *string_append(string_t *dest, const char c);
 string_t *string_concatenate(string_t *dest, const string_t source);
 string_t *string_concatenate_reverse(string_t *dest, const string_t source);
+string_t *string_concatenate_cstring(string_t *dest, const char *cstring, uint32_t cstring_size);
 string_t *string_format(string_t *dest, const string_t format, va_list ap);
 
 bool string_is_equal(const string_t string1, const string_t string2);
