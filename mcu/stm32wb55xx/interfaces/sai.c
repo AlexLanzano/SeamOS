@@ -6,51 +6,20 @@
 #include <libraries/string.h>
 #include <kernel/debug/log.h>
 
-#ifndef CONFIG_SAI_INTERFACE_MAX
-#define CONFIG_SAI_INTERFACE_MAX 1
-#endif
-
 #ifndef CONFIG_SAI_DEVICE_MAX
 #define CONFIG_SAI_DEVICE_MAX 1
 #endif
-
-typedef struct sai_interface {
-    bool is_initialized;
-    sai_interface_configuration_t config;
-    gpio_handle_t mclk_handle;
-    gpio_handle_t sck_handle;
-    gpio_handle_t sd_handle;
-    gpio_handle_t fs_handle;
-} sai_interface_t;
 
 typedef struct sai_device {
     bool is_initialized;
     sai_device_configuration_t config;
 } sai_device_t;
 
-sai_interface_t g_sai_interfaces[CONFIG_SAI_INTERFACE_MAX];
 sai_device_t g_sai_devices[CONFIG_SAI_DEVICE_MAX];
 
 static bool sai_invalid_handle(const sai_device_handle_t handle)
 {
     return (handle >= CONFIG_SAI_DEVICE_MAX || !g_sai_devices[handle].is_initialized);
-}
-
-static error_t sai_find_free_interface(sai_interface_handle_t *handle)
-{
-    if (!handle) {
-        return ERROR_INVALID;
-    }
-
-    sai_interface_handle_t sai_handle;
-    for (sai_handle = 0; sai_handle < CONFIG_SAI_INTERFACE_MAX; sai_handle++) {
-        if (!g_sai_interfaces[sai_handle].is_initialized) {
-            *handle = sai_handle;
-            return SUCCESS;
-        }
-    }
-
-    return ERROR_NO_MEMORY;
 }
 
 static error_t sai_find_free_device(sai_device_handle_t *handle)
@@ -119,81 +88,52 @@ static error_t sai_configure(const sai_device_handle_t handle)
     return SUCCESS;
 }
 
-error_t sai_interface_init(sai_interface_configuration_t config, sai_interface_handle_t *handle)
+error_t sai_interface_init(SAI_TypeDef *sai, uint32_t mclk_pin, uint32_t sck_pin, uint32_t sd_pin, uint32_t fs_pin)
 {
-    if (!handle) {
-        return ERROR_INVALID;
-    }
-
     error_t error;
 
-    error = sai_find_free_interface(handle);
+    error = gpio_init((gpio_configuration_t)
+                      {.mode = GPIO_MODE_ALT_FUNC,
+                       .output_type = GPIO_OUTPUT_TYPE_PUSH_PULL,
+                       .output_speed = GPIO_OUTPUT_SPEED_LOW,
+                       .pull_resistor = GPIO_PULL_RESISTOR_NONE,
+                       .alternative_function = 13},
+                      mclk_pin);
     if (error) {
         return error;
     }
 
-    sai_interface_t *interface = &g_sai_interfaces[*handle];
-
-    interface->is_initialized = true;
-
-    if (config.mclk_port) {
-        error = gpio_init((gpio_configuration_t)
-                          {.port = config.mclk_port,
-                           .pin = config.mclk_pin,
-                           .mode = GPIO_MODE_ALT_FUNC,
-                           .output_type = GPIO_OUTPUT_TYPE_PUSH_PULL,
-                           .output_speed = GPIO_OUTPUT_SPEED_LOW,
-                           .pull_resistor = GPIO_PULL_RESISTOR_NONE,
-                           .alternative_function = 13},
-                          &interface->mclk_handle);
-        if (error) {
-            return error;
-        }
+    error = gpio_init((gpio_configuration_t)
+                      {.mode = GPIO_MODE_ALT_FUNC,
+                       .output_type = GPIO_OUTPUT_TYPE_PUSH_PULL,
+                       .output_speed = GPIO_OUTPUT_SPEED_LOW,
+                       .pull_resistor = GPIO_PULL_RESISTOR_NONE,
+                       .alternative_function = 13},
+                      sck_pin);
+    if (error) {
+        return error;
     }
 
-    if (config.sck_port) {
-       error = gpio_init((gpio_configuration_t)
-                         {.port = config.sck_port,
-                          .pin = config.sck_pin,
-                          .mode = GPIO_MODE_ALT_FUNC,
-                          .output_type = GPIO_OUTPUT_TYPE_PUSH_PULL,
-                          .output_speed = GPIO_OUTPUT_SPEED_LOW,
-                          .pull_resistor = GPIO_PULL_RESISTOR_NONE,
-                          .alternative_function = 13},
-                         &interface->sck_handle);
-       if (error) {
-           return error;
-       }
+    error = gpio_init((gpio_configuration_t)
+                      {.mode = GPIO_MODE_ALT_FUNC,
+                       .output_type = GPIO_OUTPUT_TYPE_PUSH_PULL,
+                       .output_speed = GPIO_OUTPUT_SPEED_LOW,
+                       .pull_resistor = GPIO_PULL_RESISTOR_NONE,
+                       .alternative_function = 13},
+                      sd_pin);
+    if (error) {
+        return error;
     }
 
-    if (config.sd_port) {
-        error = gpio_init((gpio_configuration_t)
-                          {.port = config.sd_port,
-                           .pin = config.sd_pin,
-                           .mode = GPIO_MODE_ALT_FUNC,
-                           .output_type = GPIO_OUTPUT_TYPE_PUSH_PULL,
-                           .output_speed = GPIO_OUTPUT_SPEED_LOW,
-                           .pull_resistor = GPIO_PULL_RESISTOR_NONE,
-                           .alternative_function = 13},
-                          &interface->sd_handle);
-        if (error) {
-            return error;
-        }
-    }
-
-    if (config.fs_port) {
-        error = gpio_init((gpio_configuration_t)
-                          {.port = config.fs_port,
-                           .pin = config.fs_pin,
-                           .mode = GPIO_MODE_ALT_FUNC,
-                           .output_type = GPIO_OUTPUT_TYPE_PUSH_PULL,
-                           .output_speed = GPIO_OUTPUT_SPEED_LOW,
-                           .pull_resistor = GPIO_PULL_RESISTOR_NONE,
-                           .alternative_function = 13},
-                          &interface->fs_handle);
-        if (error) {
-            return error;
-        }
+    error = gpio_init((gpio_configuration_t)
+                      {.mode = GPIO_MODE_ALT_FUNC,
+                       .output_type = GPIO_OUTPUT_TYPE_PUSH_PULL,
+                       .output_speed = GPIO_OUTPUT_SPEED_LOW,
+                       .pull_resistor = GPIO_PULL_RESISTOR_NONE,
+                       .alternative_function = 13},
+                      fs_pin);
+    if (error) {
+        return error;
     }
 
     return SUCCESS;

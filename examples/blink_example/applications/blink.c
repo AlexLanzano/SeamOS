@@ -1,35 +1,31 @@
-#include <mcu/stm32wb55xx/gpio.h>
-#include <mcu/system_timer.h>
 #include <kernel/task/task_manager.h>
 #include <libraries/error.h>
 #include <libraries/string.h>
-#include <kernel/debug/log.h>
+#include <libraries/device.h>
+#include <libraries/log.h>
 #include <applications/blink.h>
 
 uint32_t g_blink_stack[500];
-static gpio_handle_t g_gpio_handle;
+static device_handle_t g_led_handle;
 
 static inline void turn_on_led()
 {
-    gpio_write(g_gpio_handle, 1);
+    uint8_t off = 1;
+    device_write(g_led_handle, &off, 1);
 }
 
 static inline void turn_off_led()
 {
-    gpio_write(g_gpio_handle, 0);
+    uint8_t on = 0;
+    device_write(g_led_handle, &on, 1);
 }
 
 void blink_task_entry()
 {
+    device_open("led", &g_led_handle);
+    log_init();
+
     log_info("Starting blink application");
-    gpio_init((gpio_configuration_t)
-                       {.port = GPIOA,
-                        .pin = 0,
-                        .mode = GPIO_MODE_OUTPUT,
-                        .output_type = GPIO_OUTPUT_TYPE_PUSH_PULL,
-                        .output_speed = GPIO_OUTPUT_SPEED_LOW,
-                        .pull_resistor = GPIO_PULL_RESISTOR_NONE},
-                        &g_gpio_handle);
 
     while (1) {
         log_info("Blink!");

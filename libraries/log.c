@@ -1,9 +1,9 @@
 #include <stdarg.h>
 #include <config.h>
-#include <mcu/lpuart.h>
-#include <kernel/debug/log.h>
 #include <libraries/string.h>
 #include <libraries/error.h>
+#include <libraries/log.h>
+#include <libraries/device.h>
 
 #ifdef CONFIG_LOG_LEVEL
 log_level_t g_log_level = CONFIG_LOG_LEVEL;
@@ -11,7 +11,7 @@ log_level_t g_log_level = CONFIG_LOG_LEVEL;
 log_level_t g_log_level = LOG_LEVEL_INFO;
 #endif
 
-int32_t g_lpuart_handle = -1;
+uint32_t g_log_handle;
 
 static void log_print(const char *format, va_list ap)
 {
@@ -31,7 +31,12 @@ static void log_print(const char *format, va_list ap)
     string_format(&msg, format_string, ap);
     string_concatenate_cstring(&msg, "\r\n", 2);
 
-    lpuart_write(g_lpuart_handle, (uint8_t *)msg.data, msg.size);
+    device_write(g_log_handle, (uint8_t *)msg.data, msg.size);
+}
+
+error_t log_init()
+{
+    return device_open("log", &g_log_handle);
 }
 
 void log(log_level_t log_level, const char *format, ...)
@@ -82,9 +87,4 @@ void log_debug(const char *format, ...)
     va_start(ap, format);
     log_print(format, ap);
     va_end(ap);
-}
-
-void log_init(log_configuration_t config)
-{
-    g_lpuart_handle = config.lpuart_handle;
 }

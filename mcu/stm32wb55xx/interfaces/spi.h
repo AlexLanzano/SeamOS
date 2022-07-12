@@ -2,10 +2,10 @@
 #define STM32WB55XX_SPI_H
 
 #include <mcu/stm32wb55xx/stm32wb55xx.h>
-#include <mcu/stm32wb55xx/gpio.h>
-#include <mcu/stm32wb55xx/dma.h>
+#include <mcu/stm32wb55xx/interfaces/gpio.h>
+#include <mcu/stm32wb55xx/interfaces/dma.h>
 #include <stdbool.h>
-#include <mcu/spi.h>
+#include <mcu/interfaces/spi.h>
 #include <libraries/error.h>
 
 typedef enum spi_clock_mode {
@@ -59,21 +59,9 @@ typedef enum spi_data_size {
     SPI_DATA_SIZE_16BIT
 } spi_data_size_t;
 
-typedef struct spi_interface_configuration {
-    GPIO_TypeDef *sck_port;
-    uint8_t sck_pin;
-
-    GPIO_TypeDef *miso_port;
-    uint8_t miso_pin;
-
-    GPIO_TypeDef *mosi_port;
-    uint8_t mosi_pin;
-} spi_interface_configuration_t;
-
 typedef struct spi_device_configuration {
     SPI_TypeDef *spi;
-    GPIO_TypeDef *cs_port;
-    uint8_t cs_pin;
+    uint32_t cs_pin;
     spi_clock_mode_t clock_mode;
     spi_mode_t mode;
     spi_baud_rate_prescaler_t baud_rate_prescaler;
@@ -83,5 +71,7 @@ typedef struct spi_device_configuration {
     bool active_low;
     dma_handle_t dma_handle;
 } spi_device_configuration_t;
+
+error_t spi_interface_init(SPI_TypeDef *spi, uint32_t sck_pin, uint32_t miso_pin, uint32_t mosi_pin);
 
 #endif

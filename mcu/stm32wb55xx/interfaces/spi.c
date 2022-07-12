@@ -1,14 +1,13 @@
 #include <config.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <kernel/debug/log.h>
 #include <libraries/string.h>
 #include <libraries/error.h>
 #include <mcu/stm32wb55xx/stm32wb55xx.h>
-#include <mcu/stm32wb55xx/spi.h>
+#include <mcu/stm32wb55xx/interfaces/spi.h>
 #include <mcu/stm32wb55xx/rcc.h>
-#include <mcu/stm32wb55xx/gpio.h>
-#include <mcu/stm32wb55xx/dma.h>
+#include <mcu/stm32wb55xx/interfaces/gpio.h>
+#include <mcu/stm32wb55xx/interfaces/dma.h>
 
 
 #ifndef CONFIG_SPI_DEVICE_MAX
@@ -19,21 +18,11 @@
 #define CONFIG_SPI_INTERFACE_MAX 2
 #endif
 
-typedef struct spi_interface {
-    bool is_initialized;
-    spi_interface_configuration_t config;
-    gpio_handle_t sck_handle;
-    gpio_handle_t miso_handle;
-    gpio_handle_t mosi_handle;
-} spi_interface_t;
-
 typedef struct spi_device {
     bool is_initialized;
     spi_device_configuration_t config;
-    gpio_handle_t cs_pin_handle;
 } spi_device_t;
 
-spi_interface_t g_spi_interfaces[CONFIG_SPI_INTERFACE_MAX];
 spi_device_t g_spi_devices[CONFIG_SPI_DEVICE_MAX];
 spi_device_handle_t g_current_spi_device = -1;
 
@@ -103,24 +92,6 @@ static void spi_receive_8bit(SPI_TypeDef *spi, uint8_t *data)
     *data = spi->DR;
 }
 
-static error_t spi_find_free_interface(spi_interface_handle_t *handle)
-{
-    if (!handle) {
-        return ERROR_INVALID;
-    }
-
-    spi_interface_handle_t spi_handle;
-
-    for (spi_handle = 0; spi_handle < CONFIG_SPI_INTERFACE_MAX; spi_handle++) {
-        if (!g_spi_interfaces[spi_handle].is_initialized) {
-            *handle = spi_handle;
-            return SUCCESS;
-        }
-    }
-
-    return ERROR_NO_MEMORY;
-}
-
 static error_t spi_find_free_device(spi_device_handle_t *handle)
 {
     if (!handle) {
@@ -149,9 +120,9 @@ error_t spi_device_enable(spi_device_handle_t handle)
     spi_device_t *spi_device = &g_spi_devices[handle];
 
     if (spi_device->config.active_low) {
-        gpio_write(spi_device->cs_pin_handle, 0);
+        gpio_write(spi_device->config.cs_pin, 0);
     } else {
-        gpio_write(spi_device->cs_pin_handle, 1);
+        gpio_write(spi_device->config.cs_pin, 1);
     }
 
     return SUCCESS;
@@ -167,9 +138,9 @@ error_t spi_device_disable(spi_device_handle_t handle)
     spi_device_t *spi_device = &g_spi_devices[handle];
 
     if (spi_device->config.active_low) {
-        gpio_write(spi_device->cs_pin_handle, 1);
+        gpio_write(spi_device->config.cs_pin, 1);
     } else {
-        gpio_write(spi_device->cs_pin_handle, 0);
+        gpio_write(spi_device->config.cs_pin, 0);
     }
 
     return SUCCESS;
@@ -271,13 +242,11 @@ error_t spi_device_init(spi_device_configuration_t config, spi_device_handle_t *
     memcpy(&g_spi_devices[*handle].config, &config, sizeof(spi_device_configuration_t));
 
     error = gpio_init((gpio_configuration_t)
-                      {.port = config.cs_port,
-                       .pin = config.cs_pin,
-                       .mode = GPIO_MODE_OUTPUT,
+                      {.mode = GPIO_MODE_OUTPUT,
                        .output_type = GPIO_OUTPUT_TYPE_PUSH_PULL,
                        .output_speed = GPIO_OUTPUT_SPEED_LOW,
                        .pull_resistor = GPIO_PULL_RESISTOR_NONE},
-                      &g_spi_devices[*handle].cs_pin_handle);
+                      config.cs_pin);
     if (error) {
         return error;
     }
@@ -300,60 +269,41 @@ error_t spi_device_deinit(spi_device_handle_t handle)
     return SUCCESS;
 }
 
-error_t spi_interface_init(spi_interface_configuration_t config, spi_interface_handle_t *handle)
+error_t spi_interface_init(SPI_TypeDef *spi, uint32_t sck_pin, uint32_t miso_pin, uint32_t mosi_pin)
 {
-    if (!handle) {
-        return ERROR_INVALID;
-    }
-
     error_t error;
-    gpio_configuration_t sck_pin;
-    gpio_configuration_t miso_pin;
-    gpio_configuration_t mosi_pin;
+    gpio_configuration_t sck_pin_config = {0};
+    gpio_configuration_t miso_pin_config = {0};
+    gpio_configuration_t mosi_pin_config = {0};
 
-    error = spi_find_free_interface(handle);
-    if (error) {
-        return error;
-    }
-
-    spi_interface_t *interface = &g_spi_interfaces[*handle];
-
-    interface->is_initialized = true;
-
-    sck_pin.port = config.sck_port;
-    sck_pin.pin = config.sck_pin;
-    sck_pin.mode = GPIO_MODE_ALT_FUNC;
-    sck_pin.output_type = GPIO_OUTPUT_TYPE_PUSH_PULL;
-    sck_pin.output_speed = GPIO_OUTPUT_SPEED_HIGH;
-    sck_pin.pull_resistor = GPIO_PULL_RESISTOR_NONE;
-    sck_pin.alternative_function = 5;
-    error = gpio_init(sck_pin, &interface->sck_handle);
+    sck_pin_config.mode = GPIO_MODE_ALT_FUNC;
+    sck_pin_config.output_type = GPIO_OUTPUT_TYPE_PUSH_PULL;
+    sck_pin_config.output_speed = GPIO_OUTPUT_SPEED_HIGH;
+    sck_pin_config.pull_resistor = GPIO_PULL_RESISTOR_NONE;
+    sck_pin_config.alternative_function = 5;
+    error = gpio_init(sck_pin_config, sck_pin);
     if (error) {
         log_error(error, "Failed to configure sck pin");
         return error;
     }
 
-    miso_pin.port = config.miso_port;
-    miso_pin.pin = config.miso_pin;
-    miso_pin.mode = GPIO_MODE_ALT_FUNC;
-    miso_pin.output_type = GPIO_OUTPUT_TYPE_PUSH_PULL;
-    miso_pin.output_speed = GPIO_OUTPUT_SPEED_HIGH;
-    miso_pin.pull_resistor = GPIO_PULL_RESISTOR_NONE;
-    miso_pin.alternative_function = 5;
-    error = gpio_init(miso_pin, &interface->miso_handle);
+    miso_pin_config.mode = GPIO_MODE_ALT_FUNC;
+    miso_pin_config.output_type = GPIO_OUTPUT_TYPE_PUSH_PULL;
+    miso_pin_config.output_speed = GPIO_OUTPUT_SPEED_HIGH;
+    miso_pin_config.pull_resistor = GPIO_PULL_RESISTOR_NONE;
+    miso_pin_config.alternative_function = 5;
+    error = gpio_init(miso_pin_config, miso_pin);
     if (error) {
         log_error(error, "Failed to configure miso pin");
         return error;
     }
 
-    mosi_pin.port = config.mosi_port;
-    mosi_pin.pin = config.mosi_pin;
-    mosi_pin.mode = GPIO_MODE_ALT_FUNC;
-    mosi_pin.output_type = GPIO_OUTPUT_TYPE_PUSH_PULL;
-    mosi_pin.output_speed = GPIO_OUTPUT_SPEED_HIGH;
-    mosi_pin.pull_resistor = GPIO_PULL_RESISTOR_NONE;
-    mosi_pin.alternative_function = 5;
-    error = gpio_init(mosi_pin, &interface->mosi_handle);
+    mosi_pin_config.mode = GPIO_MODE_ALT_FUNC;
+    mosi_pin_config.output_type = GPIO_OUTPUT_TYPE_PUSH_PULL;
+    mosi_pin_config.output_speed = GPIO_OUTPUT_SPEED_HIGH;
+    mosi_pin_config.pull_resistor = GPIO_PULL_RESISTOR_NONE;
+    mosi_pin_config.alternative_function = 5;
+    error = gpio_init(mosi_pin_config, mosi_pin);
     if (error) {
         log_error(error, "Failed to configure mosi pin");
         return error;

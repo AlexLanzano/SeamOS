@@ -9,6 +9,8 @@ typedef enum {
     ERROR_TIMEOUT,
     ERROR_FAULT,
     ERROR_LOCKED,
+    ERROR_NOT_FOUND,
+    ERROR_NOT_IMPLEMENTED,
 } error_t;
 
 struct error_message {

@@ -3,7 +3,7 @@
 
 #include <stdarg.h>
 #include <stdint.h>
-#include <mcu/lpuart.h>
+#include <mcu/interfaces/uart.h>
 #include <libraries/error.h>
 
 #define LOG_MSG_MAX_LENGTH 512
@@ -14,14 +14,10 @@ typedef enum {
     LOG_LEVEL_DEBUG,
 } log_level_t;
 
-typedef struct log_configuration {
-    lpuart_handle_t lpuart_handle;
-} log_configuration_t;
-
+error_t log_init();
 void log(log_level_t log_level, const char *format, ...);
 void log_error(error_t error, const char *format, ...);
 void log_info(const char *format, ...);
 void log_debug(const char *format, ...);
-void log_init(log_configuration_t config);
 
 #endif

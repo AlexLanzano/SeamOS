@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <mcu/dma.h>
+#include <mcu/interfaces/dma.h>
 
 typedef enum dma_data_size {
     DMA_TRANSFER_SIZE_8BITS,

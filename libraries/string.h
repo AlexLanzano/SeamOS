@@ -51,6 +51,7 @@ string_t *string_concatenate_cstring(string_t *dest, const char *cstring, uint32
 string_t *string_format(string_t *dest, const string_t format, va_list ap);
 
 bool string_is_equal(const string_t string1, const string_t string2);
+bool string_is_equal_cstring(const string_t string1, const char *string2);
 bool string_is_valid(const string_t string);
 
 uint32_t string_to_uint(const string_t string);

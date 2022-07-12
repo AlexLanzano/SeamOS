@@ -511,6 +511,15 @@ bool string_is_equal(string_t string1, string_t string2)
     return (memcmp(string1.data, string2.data, string1.size) == 0);
 }
 
+bool string_is_equal_cstring(const string_t string1, const char *string2)
+{
+    if (!string_is_valid(string1) || string1.size != string_cstring_size(string2)) {
+        return false;
+    }
+
+    return (memcmp(string1.data, string2, string1.size) == 0);
+}
+
 bool string_is_valid(string_t string)
 {
     if (string.error || !string.data) {

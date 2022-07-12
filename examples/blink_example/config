@@ -1,3 +1,36 @@
 CONFIG_LOG_LEVEL = 1
-CONFIG_CLOCK_FREQ = 32000000
+
+CONFIG_CLOCK_SOURCE = RCC_SYSTEM_CLOCK_SOURCE_PLL
+CONFIG_CLOCK_FREQ = 64000000
+
+CONFIG_ENABLE_GPIO_A = 1
+CONFIG_ENABLE_GPIO_B = 1
+
+CONFIG_ENABLE_LPUART1 = 1
+CONFIG_LPUART1_BAUD = 115200
+
 CONFIG_TASK_MAX = 8
+
+CONFIG_PIN_MAP = [(stm32wb55xx_gpio_t){.pin=0,.port=GPIOA},\
+                  (stm32wb55xx_gpio_t){.pin=1,.port=GPIOA},\
+                  (stm32wb55xx_gpio_t){.pin=2,.port=GPIOA},\
+                  (stm32wb55xx_gpio_t){.pin=3,.port=GPIOA},\
+                  (stm32wb55xx_gpio_t){.pin=4,.port=GPIOA},\
+                  (stm32wb55xx_gpio_t){.pin=5,.port=GPIOA},\
+                  (stm32wb55xx_gpio_t){.pin=6,.port=GPIOA},\
+                  (stm32wb55xx_gpio_t){.pin=7,.port=GPIOA},\
+                  (stm32wb55xx_gpio_t){.pin=8,.port=GPIOA},\
+                  (stm32wb55xx_gpio_t){.pin=9,.port=GPIOA},\
+                  (stm32wb55xx_gpio_t){.pin=10,.port=GPIOB},\
+                  (stm32wb55xx_gpio_t){.pin=11,.port=GPIOB},\
+                  (stm32wb55xx_gpio_t){.pin=12,.port=GPIOB},\
+                  (stm32wb55xx_gpio_t){.pin=13,.port=GPIOB},\
+                  (stm32wb55xx_gpio_t){.pin=14,.port=GPIOB},\
+                  (stm32wb55xx_gpio_t){.pin=15,.port=GPIOB},\
+                  (stm32wb55xx_gpio_t){.pin=16,.port=GPIOB},\
+                  (stm32wb55xx_gpio_t){.pin=17,.port=GPIOB},\
+                  (stm32wb55xx_gpio_t){.pin=18,.port=GPIOB},\
+                  (stm32wb55xx_gpio_t){.pin=19,.port=GPIOB}]
+
+CONFIG_PIN_LPUART1_TX = 2
+CONFIG_PIN_LPUART1_RX = 3

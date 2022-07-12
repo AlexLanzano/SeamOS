@@ -1,6 +1,7 @@
-#include <kernel/debug/log.h>
+#include <kernel/device/device.h>
 #include <arch/arch.h>
 #include <arch/arm_cm4/cmsis_gcc.h>
+#include <arch/system.h>
 
 #define SBC_ICSR (*((volatile uint32_t *)0xe000ed04))
 #define PENDSVSET_BIT (1UL << 28UL)
@@ -51,9 +52,56 @@ void arch_disable_irq()
     __disable_irq();
 }
 
-void __attribute__((weak)) system_call_handler(uint32_t system_call, uint32_t *system_call_args)
+void system_call_handler(uint32_t system_call, uint32_t *system_call_args)
 {
-    return;
+    if (system_call == SYSTEM_CALL_DEVICE_OPEN+1) {
+        device_open_args_t *args = (device_open_args_t *)system_call_args[0];
+        device_open(args->name, args->handle);
+
+    } else if (system_call == SYSTEM_CALL_DEVICE_CLOSE+1) {
+        device_close_args_t *args = (device_close_args_t *)system_call_args[0];
+        device_close(args->handle);
+
+    } else if (system_call == SYSTEM_CALL_DEVICE_READ+1) {
+        device_read_args_t *args = (device_read_args_t *)system_call_args[0];
+        device_read(args->handle, args->data, args->data_length);
+
+    } else if (system_call == SYSTEM_CALL_DEVICE_WRITE+1) {
+        device_write_args_t *args = (device_write_args_t *)system_call_args[0];
+        device_write(args->handle, args->data, args->data_length);
+
+    } else if (system_call == SYSTEM_CALL_DEVICE_IOCTL+1) {
+        device_ioctl_args_t *args = (device_ioctl_args_t *)system_call_args[0];
+        device_ioctl(args->handle, args->cmd, args->arg);
+    }
+}
+
+#define asm_svc(system_call, r0) asm("mov r0, %1\n" "svc %0\n" :: "I" (system_call), "r" (r0))
+
+void system_call(system_call_t system_call, void *args)
+{
+    register uint32_t r0 asm("r0") = (uint32_t)args;
+    switch (system_call) {
+    case SYSTEM_CALL_DEVICE_OPEN:
+        asm_svc(SYSTEM_CALL_DEVICE_OPEN+1, r0);
+        break;
+
+    case SYSTEM_CALL_DEVICE_CLOSE:
+        asm_svc(SYSTEM_CALL_DEVICE_CLOSE+1, r0);
+        break;
+
+    case SYSTEM_CALL_DEVICE_READ:
+        asm_svc(SYSTEM_CALL_DEVICE_READ+1, r0);
+        break;
+
+    case SYSTEM_CALL_DEVICE_WRITE:
+        asm_svc(SYSTEM_CALL_DEVICE_WRITE+1, r0);
+        break;
+
+    case SYSTEM_CALL_DEVICE_IOCTL:
+        asm_svc(SYSTEM_CALL_DEVICE_IOCTL+1, r0);
+        break;
+    }
 }
 
 void SVC_Handler_Main(uint32_t *svc_args)

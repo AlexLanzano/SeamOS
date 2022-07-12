@@ -58,7 +58,7 @@ static bool i2c_ready_to_transmit(I2C_TypeDef *i2c)
 error_t i2c_stop(i2c_handle_t handle)
 {
     i2c_device_configuration_t i2c_device = g_i2c_devices[handle].device;
-    I2C_TypeDef *i2c = i2c_device.i2c;
+    I2C_TypeDef *i2c = i2c_device.periph_addr;
 
     arch_disable_irq();
     i2c->CR2 |= I2C_CR2_STOP;
@@ -80,7 +80,7 @@ error_t i2c_read(i2c_handle_t handle, uint8_t *data, uint32_t size)
     }
 
     i2c_device_configuration_t i2c_device = g_i2c_devices[handle].device;
-    I2C_TypeDef *i2c = i2c_device.i2c;
+    I2C_TypeDef *i2c = i2c_device.periph_addr;
     uint32_t index = 0;
 
     i2c->CR2 |= i2c_device.address_mode << I2C_CR2_ADD10_Pos;
@@ -123,7 +123,7 @@ error_t i2c_write(i2c_handle_t handle, uint8_t *data, uint32_t size)
     }
 
     i2c_device_configuration_t i2c_device = g_i2c_devices[handle].device;
-    I2C_TypeDef *i2c = i2c_device.i2c;
+    I2C_TypeDef *i2c = i2c_device.periph_addr;
     uint32_t index = 0;
 
     i2c->CR2 |= i2c_device.address_mode << I2C_CR2_ADD10_Pos;
@@ -166,6 +166,7 @@ error_t i2c_device_init(i2c_device_configuration_t device, i2c_handle_t *handle)
         log_error(ERROR_INVALID, "Passed null handle pointer as function argument");
         return ERROR_INVALID;
     }
+
     error_t error;
 
     error = i2c_find_free_device(handle);
@@ -192,43 +193,35 @@ error_t i2c_device_deinit(i2c_handle_t handle)
     return SUCCESS;
 }
 
-error_t i2c_interface_init(i2c_interface_configuration_t config)
+error_t i2c_interface_init(I2C_TypeDef *i2c, uint32_t scl_pin, uint32_t sda_pin, uint32_t timing)
 {
     error_t error;
-    gpio_handle_t handle;
-    gpio_configuration_t scl_pin;
-    gpio_configuration_t sda_pin;
-    I2C_TypeDef *i2c = config.i2c;
-    memset(&scl_pin, 0, sizeof(gpio_configuration_t));
-    memset(&sda_pin, 0, sizeof(gpio_configuration_t));
+    gpio_configuration_t scl_pin_config = {0};
+    gpio_configuration_t sda_pin_config = {0};
 
-    scl_pin.port = config.scl_port;
-    scl_pin.pin = config.scl_pin;
-    scl_pin.mode = GPIO_MODE_ALT_FUNC;
-    scl_pin.output_type = GPIO_OUTPUT_TYPE_OPEN_DRAIN;
-    scl_pin.output_speed = GPIO_OUTPUT_SPEED_HIGH;
-    scl_pin.pull_resistor = GPIO_PULL_RESISTOR_NONE;
-    scl_pin.alternative_function = 4;
-    error = gpio_init(scl_pin, &handle);
+    scl_pin_config.mode = GPIO_MODE_ALT_FUNC;
+    scl_pin_config.output_type = GPIO_OUTPUT_TYPE_OPEN_DRAIN;
+    scl_pin_config.output_speed = GPIO_OUTPUT_SPEED_HIGH;
+    scl_pin_config.pull_resistor = GPIO_PULL_RESISTOR_NONE;
+    scl_pin_config.alternative_function = 4;
+    error = gpio_init(scl_pin_config, scl_pin);
     if (error) {
         log_error(error, "Failed to configure scl pin");
         return error;
     }
 
-    sda_pin.port = config.sda_port;
-    sda_pin.pin = config.sda_pin;
-    sda_pin.mode = GPIO_MODE_ALT_FUNC;
-    sda_pin.output_type = GPIO_OUTPUT_TYPE_OPEN_DRAIN;
-    sda_pin.output_speed = GPIO_OUTPUT_SPEED_HIGH;
-    sda_pin.pull_resistor = GPIO_PULL_RESISTOR_NONE;
-    sda_pin.alternative_function = 4;
-    error = gpio_init(sda_pin, &handle);
+    sda_pin_config.mode = GPIO_MODE_ALT_FUNC;
+    sda_pin_config.output_type = GPIO_OUTPUT_TYPE_OPEN_DRAIN;
+    sda_pin_config.output_speed = GPIO_OUTPUT_SPEED_HIGH;
+    sda_pin_config.pull_resistor = GPIO_PULL_RESISTOR_NONE;
+    sda_pin_config.alternative_function = 4;
+    error = gpio_init(sda_pin_config, sda_pin);
     if (error) {
         log_error(error, "Failed to configure sda pin");
         return error;
     }
 
-    i2c->TIMINGR = config.timing;
+    i2c->TIMINGR = timing;
     // Enable I2C peripheral
     i2c->CR1 |= I2C_CR1_PE;
 

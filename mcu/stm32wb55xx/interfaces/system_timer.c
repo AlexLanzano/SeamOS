@@ -1,9 +1,8 @@
 #include <config.h>
-#include <mcu/stm32wb55xx/stm32wb55xx.h>
 #include <arch/arch.h>
-#include <mcu/system_timer.h>
+#include <mcu/stm32wb55xx/stm32wb55xx.h>
+#include <mcu/interfaces/system_timer.h>
 #include <kernel/task/task_manager.h>
-#include <kernel/debug/log.h>
 
 uint32_t tick_count = 0;
 

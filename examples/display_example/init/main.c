@@ -105,8 +105,6 @@ void main()
     // TODO: Handle this within the driver
     rcc_enable_lpuart1_clock();
     rcc_enable_spi1_clock();
-    rcc_enable_gpioa_clock();
-    rcc_enable_gpiob_clock();
     rcc_enable_dma1_clock();
     rcc_enable_dmamux1_clock();
 
@@ -152,28 +150,12 @@ void main()
     task_manager_start();
 }
 
-void __attribute__((naked)) Reset_Handler()
+void init()
 {
-    __asm__("ldr r0, =_estack\n\t"
-            "mov sp, r0");
+    g_stm32wb55xx_lpuart1_config.clock_source = RCC_LPUART_CLOCK_SOURCE_SYSCLK;
+    g_stm32wb55xx_lpuart1_config.word_length = LPUART_WORD_LENGTH_8;
+    g_stm32wb55xx_lpuart1_config.stop_bits = LPUART_STOP_BITS_1;
 
-    // Copy data section from flash memory to ram
-    uint32_t data_section_size = _edata - _sdata;
-    memcpy(_sdata, _sidata, data_section_size*4);
-
-    // Zero out bss
-    uint32_t bss_section_size = _ebss - _sbss;
-    memset(_sbss, 0, bss_section_size*4);
-
-    // Set Interrupt Vector Table Offset
-    SCB->VTOR = (uint32_t)interrupt_vector_table;
-
-    rcc_reset();
-    rcc_set_pll_clock_speed(CONFIG_CLOCK_FREQ);
-    rcc_set_system_clock_source(RCC_SYSTEM_CLOCK_SOURCE_PLL);
-    rcc_disable_interrupts();
-
-    main();
 }
 
 void HardFault_Handler()

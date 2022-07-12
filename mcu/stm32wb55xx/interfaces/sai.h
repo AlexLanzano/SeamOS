@@ -9,20 +9,6 @@
 typedef uint32_t sai_interface_handle_t;
 typedef uint32_t sai_device_handle_t;
 
-typedef struct sai_interface_configuration {
-    GPIO_TypeDef *mclk_port;
-    uint8_t mclk_pin;
-
-    GPIO_TypeDef *sck_port;
-    uint8_t sck_pin;
-
-    GPIO_TypeDef *sd_port;
-    uint8_t sd_pin;
-
-    GPIO_TypeDef *fs_port;
-    uint8_t fs_pin;
-} sai_interface_configuration_t;
-
 typedef enum sai_mode {
     SAI_MODE_MASTER_TRANSMITTER,
     SAI_MODE_MASTER_RECEIVER,
@@ -88,7 +74,7 @@ typedef struct sai_device_configuration {
     sai_slot_size_t slot_size;
 } sai_device_configuration_t;
 
-error_t sai_interface_init(sai_interface_configuration_t config, sai_interface_handle_t *handle);
+error_t sai_interface_init(SAI_TypeDef *sai, uint32_t mclk_pin, uint32_t sclk_pin, uint32_t sd_pin, uint32_t fs_pin);
 error_t sai_interface_deinit(sai_interface_handle_t handle);
 
 error_t sai_device_init(sai_device_configuration_t config, sai_device_handle_t *handle);

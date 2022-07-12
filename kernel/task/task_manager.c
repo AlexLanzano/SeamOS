@@ -3,8 +3,7 @@
 #include <config.h>
 #include <libraries/string.h>
 #include <libraries/queue.h>
-#include <mcu/system_timer.h>
-#include <kernel/debug/log.h>
+#include <mcu/interfaces/system_timer.h>
 #include <kernel/task/task_manager.h>
 #include <arch/arch.h>
 
