@@ -9,12 +9,19 @@
 #define CONFIG_ENABLE_GPIO_A
 #define CONFIG_ENABLE_GPIO_B
 #define CONFIG_ENABLE_LPUART1
+#define CONFIG_ENABLE_SPI1
 
 // LPUART1 Config
 #define CONFIG_LPUART1_BAUD 115200
 #define CONFIG_PIN_LPUART1_TX 2
 #define CONFIG_PIN_LPUART1_RX 3
 #define CONFIG_LPUART1_WORD_LENGTH UART_WORD_LENGTH_8
+
+// SPI1 Config
+#define CONFIG_PIN_SPI1_SCK 4
+#define CONFIG_PIN_SPI1_MISO 5
+#define CONFIG_PIN_SPI1_MOSI 6
+#define CONFIG_SPI_BAUD_RATE_PRESCALER SPI_BAUD_RATE_PRESCALER_2
 
 // Pin Map
 #define CONFIG_PIN_MAP {(gpio_t){.pin=0,.port=GPIOA},  \
@@ -37,6 +44,9 @@
                         (gpio_t){.pin=17,.port=GPIOB}, \
                         (gpio_t){.pin=18,.port=GPIOB}, \
                         (gpio_t){.pin=19,.port=GPIOB}}
+
+// GPIO Config
+#define CONFIG_GPIO_SPEED GPIO_OUTPUT_SPEED_FAST
 
 // Task Config
 #define CONFIG_TASK_MAX 8

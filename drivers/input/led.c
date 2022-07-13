@@ -3,15 +3,14 @@
 #include <kernel/device/device.h>
 #include <mcu/interfaces/gpio.h>
 
-gpio_interface_configuration_t g_led_device_config =
-    (gpio_interface_configuration_t)
-    {
-     .mode = GPIO_MODE_OUTPUT,
-     .pull_resistor = GPIO_PULL_RESISTOR_UP
-    };
+gpio_configuration_t g_led_device_config = {
+    .mode = GPIO_MODE_OUTPUT,
+    .output_type = GPIO_OUTPUT_TYPE_PUSH_PULL,
+    .pull_resistor = GPIO_PULL_RESISTOR_UP
+};
 
 error_t led_init(uint32_t interface_handle)
-{   
+{
     return gpio_init(interface_handle, &g_led_device_config);
 }
 

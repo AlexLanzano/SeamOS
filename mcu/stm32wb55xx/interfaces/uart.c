@@ -4,6 +4,7 @@
 #include <mcu/stm32wb55xx/stm32wb55xx.h>
 #include <mcu/stm32wb55xx/interfaces/uart.h>
 #include <mcu/stm32wb55xx/interfaces/gpio.h>
+#include <mcu/interfaces/gpio.h>
 #include <libraries/string.h>
 #include <libraries/error.h>
 #include <libraries/semaphore.h>
@@ -27,18 +28,17 @@ error_t uart_enable(USART_TypeDef *uart, uint32_t tx_pin, uint32_t rx_pin, uint3
 {
     error_t error;
 
-    gpio_interface_configuration_t tx_pin_config = {0};
-    gpio_configuration_t tx_pin_mcu_config = {0};
-
-    gpio_interface_configuration_t rx_pin_config = {0};
-    gpio_configuration_t rx_pin_mcu_config = {0};
+    gpio_configuration_t tx_pin_config = {0};
+    gpio_configuration_t rx_pin_config = {0};
 
     tx_pin_config.mode = GPIO_MODE_ALT_FUNC;
     tx_pin_config.pull_resistor = GPIO_PULL_RESISTOR_NONE;
-    tx_pin_mcu_config.output_type = GPIO_OUTPUT_TYPE_PUSH_PULL;
-    tx_pin_mcu_config.output_speed = GPIO_OUTPUT_SPEED_FAST;
-    tx_pin_mcu_config.alternative_function = 8;
-    tx_pin_config.mcu_config = &tx_pin_mcu_config;
+    tx_pin_config.output_type = GPIO_OUTPUT_TYPE_PUSH_PULL;
+    if (uart == LPUART1) {
+        tx_pin_config.alternate_function = GPIO_ALT_FUNC_8_LPUART;
+    } else {
+        tx_pin_config.alternate_function = GPIO_ALT_FUNC_7_UART;
+    }
     error = gpio_init(tx_pin, &tx_pin_config);
     if (error) {
         return error;
@@ -46,10 +46,12 @@ error_t uart_enable(USART_TypeDef *uart, uint32_t tx_pin, uint32_t rx_pin, uint3
 
     rx_pin_config.mode = GPIO_MODE_ALT_FUNC;
     rx_pin_config.pull_resistor = GPIO_PULL_RESISTOR_NONE;
-    rx_pin_mcu_config.output_type = GPIO_OUTPUT_TYPE_PUSH_PULL;
-    rx_pin_mcu_config.output_speed = GPIO_OUTPUT_SPEED_FAST;
-    rx_pin_mcu_config.alternative_function = 8;
-    rx_pin_config.mcu_config = &rx_pin_mcu_config;
+    rx_pin_config.output_type = GPIO_OUTPUT_TYPE_PUSH_PULL;
+    if (uart == LPUART1) {
+        tx_pin_config.alternate_function = GPIO_ALT_FUNC_8_LPUART;
+    } else {
+        tx_pin_config.alternate_function = GPIO_ALT_FUNC_7_UART;
+    }
     error = gpio_init(rx_pin, &rx_pin_config);
     if (error) {
         return error;
