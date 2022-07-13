@@ -1,46 +1,64 @@
+#include <drivers/input/led.h>
 #include <libraries/error.h>
 #include <libraries/string.h>
 #include <kernel/device/device.h>
 #include <mcu/interfaces/gpio.h>
 
-gpio_interface_configuration_t g_led_device_config =
-    (gpio_interface_configuration_t)
-    {
-     .mode = GPIO_MODE_OUTPUT,
-     .pull_resistor = GPIO_PULL_RESISTOR_UP
-    };
+gpio_configuration_t g_led_device_config = {
+    .mode = GPIO_MODE_OUTPUT,
+    .output_type = GPIO_OUTPUT_TYPE_PUSH_PULL,
+    .pull_resistor = GPIO_PULL_RESISTOR_UP
+};
 
-error_t led_init(uint32_t interface_handle)
-{   
-    return gpio_init(interface_handle, &g_led_device_config);
-}
-
-error_t led_deinit(uint32_t interface_handle)
+error_t led_init(void *config)
 {
-    return gpio_deinit(interface_handle);
+    if (!config) {
+        return ERROR_INVALID;
+    }
+
+    led_configuration_t *led_config = (led_configuration_t *)config;
+    return gpio_init(led_config->pin, &g_led_device_config);
 }
 
-error_t led_read(uint32_t interface_handle, uint8_t *data, uint32_t data_length)
+error_t led_deinit(void *config)
 {
-    return gpio_read(interface_handle, data);
+    if (!config) {
+        return ERROR_INVALID;
+    }
+
+    led_configuration_t *led_config = (led_configuration_t *)config;
+    return gpio_deinit(led_config->pin);
 }
 
-error_t led_write(uint32_t interface_handle, uint8_t *data, uint32_t data_length)
+error_t led_read(void *config, uint8_t *data, uint32_t data_length)
 {
-    return gpio_write(interface_handle, *data);
+    if (!config || !data) {
+        return ERROR_INVALID;
+    }
+
+    led_configuration_t *led_config = (led_configuration_t *)config;
+    return gpio_read(led_config->pin, data);
 }
 
-error_t led_ioctl(uint32_t interface_handle, uint32_t cmd, void *arg)
+error_t led_write(void *config, uint8_t *data, uint32_t data_length)
+{
+    if (!config || !data) {
+        return ERROR_INVALID;
+    }
+
+    led_configuration_t *led_config = (led_configuration_t *)config;
+    return gpio_write(led_config->pin, *data);
+}
+
+error_t led_ioctl(void *config, uint32_t cmd, void *arg)
 {
     return ERROR_NOT_IMPLEMENTED;
 }
 
-device_ops_t g_led_device_ops =
-    (device_ops_t)
-    {
-     .init = led_init,
-     .deinit = led_deinit,
-     .read = led_read,
-     .write = led_write,
-     .ioctl = led_ioctl
-    };
+device_ops_t g_led_device_ops = {
+    .init = led_init,
+    .deinit = led_deinit,
+    .read = led_read,
+    .write = led_write,
+    .ioctl = led_ioctl
+};

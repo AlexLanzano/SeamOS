@@ -20,7 +20,9 @@ export SEAMOS_DRIVER_SOURCE = $(SEAMOS_PATH)/drivers/input/led.c \
                               $(SEAMOS_PATH)/drivers/serial/log.c
 export SEAMOS_MCU_INTERFACES_SOURCE = $(SEAMOS_PATH)/mcu/$(MCU)/interfaces/gpio.c \
                                       $(SEAMOS_PATH)/mcu/$(MCU)/interfaces/uart.c \
-                                      $(SEAMOS_PATH)/mcu/$(MCU)/interfaces/system_timer.c
+                                      $(SEAMOS_PATH)/mcu/$(MCU)/interfaces/system_timer.c \
+                                      $(SEAMOS_PATH)/mcu/$(MCU)/interfaces/spi.c \
+                                      $(SEAMOS_PATH)/mcu/$(MCU)/interfaces/dma.c
 
 BLINK_EXAMPLE_SOURCE = $(wildcard applications/*.c) \
                        $(wildcard init/*.c)

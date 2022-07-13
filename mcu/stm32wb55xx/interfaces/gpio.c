@@ -73,13 +73,12 @@ static error_t gpio_set_alternative_function(GPIO_TypeDef *gpio_port, uint8_t pi
     return SUCCESS;
 }
 
-error_t gpio_init(uint32_t pin_number, gpio_interface_configuration_t *config)
+error_t gpio_init(uint32_t pin_number, gpio_configuration_t *config)
 {
     error_t error;
     uint8_t pin = g_pin_map[pin_number].pin;
     GPIO_TypeDef *port = g_pin_map[pin_number].port;
-    gpio_configuration_t *mcu_config = (gpio_configuration_t *)config->mcu_config;
-    
+
     error = gpio_set_mode(port, pin, config->mode);
     if (error) {
         return error;
@@ -90,19 +89,17 @@ error_t gpio_init(uint32_t pin_number, gpio_interface_configuration_t *config)
         return error;
     }
 
-    if (mcu_config) {
-        error = gpio_set_output_type(port, pin, mcu_config->output_type);
-        if (error) {
-            return error;
-        }
-        
-        error = gpio_set_output_speed(port, pin, mcu_config->output_speed);
-        if (error) {
-            return error;
-        }
-        
-        error = gpio_set_alternative_function(port, pin, mcu_config->alternative_function);
+    error = gpio_set_output_type(port, pin, config->output_type);
+    if (error) {
+        return error;
     }
+
+    error = gpio_set_output_speed(port, pin, CONFIG_GPIO_SPEED);
+    if (error) {
+        return error;
+    }
+
+    error = gpio_set_alternative_function(port, pin, config->alternate_function);
     return error;
 }
 

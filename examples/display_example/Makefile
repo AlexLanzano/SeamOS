@@ -1,7 +1,7 @@
 export MCU = stm32wb55xx
 export SEAMOS_LIB = $(PWD)/SeamOS.a
-export CONFIG = $(PWD)/config
-SEAMOS_PATH = ../../
+export CONFIG = $(PWD)/config.h
+SEAMOS_PATH = $(PWD)/../../
 GCC = $(COMPILER)gcc
 LD = $(COMPILER)ld
 OBJCOPY = $(COMPILER)objcopy
@@ -10,13 +10,22 @@ LINKER_SCRIPT = linker.ld
 include $(SEAMOS_PATH)/mcu/$(MCU)/config.mk
 
 INCLUDE = -I$(SEAMOS_PATH) -I$(SEAMOS_PATH)/mcu/$(MCU)/include -I$(PWD)
-CFLAGS ?= -Wall -Werror -c -ffreestanding -nostdlib $(MCU_CFLAGS) $(INCLUDE) -g \
-          -DLOG_LEVEL=$(CONFIG_LOG_LEVEL) -MMD -MF $(DEPDIR)/$*.d
+CFLAGS ?= -Wall -Werror -c -ffreestanding -nostdlib $(MCU_CFLAGS) $(INCLUDE) -g3 \
+          -MMD -MF $(DEPDIR)/$*.d
 LDFLAGS ?= --omagic -static
 
 DEPDIR = .deps/
 
-DISPLAY_EXAMPLE_SOURCE = $(wildcard init/*.c)
+export SEAMOS_DRIVER_SOURCE = $(SEAMOS_PATH)/drivers/serial/log.c \
+                              $(SEAMOS_PATH)/drivers/display/st7789.c
+export SEAMOS_MCU_INTERFACES_SOURCE = $(SEAMOS_PATH)/mcu/$(MCU)/interfaces/gpio.c \
+                                      $(SEAMOS_PATH)/mcu/$(MCU)/interfaces/uart.c \
+                                      $(SEAMOS_PATH)/mcu/$(MCU)/interfaces/system_timer.c \
+                                      $(SEAMOS_PATH)/mcu/$(MCU)/interfaces/spi.c \
+                                      $(SEAMOS_PATH)/mcu/$(MCU)/interfaces/dma.c
+
+DISPLAY_EXAMPLE_SOURCE = $(wildcard applications/*.c) \
+                       $(wildcard init/*.c)
 DISPLAY_EXAMPLE_OBJECTS = $(patsubst %.c,%.o,$(DISPLAY_EXAMPLE_SOURCE))
 
 DEPENDS = $(patsubst %.c,$(DEPDIR)/%.d,$(DISPLAY_EXAMPLE_SOURCE))

@@ -1,30 +1,46 @@
+#include <drivers/serial/log.h>
 #include <libraries/error.h>
 #include <libraries/string.h>
 #include <kernel/device/device.h>
 #include <mcu/interfaces/uart.h>
 
-static error_t log_init(uint32_t interface_handle)
+static error_t log_init(void *config)
 {
-    return uart_init(interface_handle, 0);
-    
+    if (!config) {
+        return ERROR_INVALID;
+    }
+    log_configuration_t *log_config = (log_configuration_t *)config;
+    return uart_init(log_config->interface_handle, 0);
 }
 
-static error_t log_deinit(uint32_t interface_handle)
+static error_t log_deinit(void *config)
 {
-    return uart_deinit(interface_handle);
+    if (!config) {
+        return ERROR_INVALID;
+    }
+    log_configuration_t *log_config = (log_configuration_t *)config;
+    return uart_deinit(log_config->interface_handle);
 }
 
-static error_t log_read(uint32_t interface_handle, uint8_t *data, uint32_t data_length)
+static error_t log_read(void *config, uint8_t *data, uint32_t data_length)
 {
-    return uart_read(interface_handle, data, data_length);
+    if (!config) {
+        return ERROR_INVALID;
+    }
+    log_configuration_t *log_config = (log_configuration_t *)config;
+    return uart_read(log_config->interface_handle, data, data_length);
 }
 
-static error_t log_write(uint32_t interface_handle, uint8_t *data, uint32_t data_length)
+static error_t log_write(void *config, uint8_t *data, uint32_t data_length)
 {
-    return uart_write(interface_handle, data, data_length);
+    if (!config) {
+        return ERROR_INVALID;
+    }
+    log_configuration_t *log_config = (log_configuration_t *)config;
+    return uart_write(log_config->interface_handle, data, data_length);
 }
 
-static error_t log_ioctl(uint32_t interface_handle, uint32_t cmd, void *arg)
+static error_t log_ioctl(void *config, uint32_t cmd, void *arg)
 {
     return ERROR_NOT_IMPLEMENTED;
 }

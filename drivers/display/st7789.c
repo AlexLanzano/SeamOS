@@ -1,21 +1,33 @@
 #include <stdint.h>
-#include <mcu/gpio.h>
-#include <mcu/spi.h>
-#include <mcu/system_timer.h>
+#include <mcu/interfaces/gpio.h>
+#include <mcu/interfaces/spi.h>
+#include <mcu/interfaces/system_timer.h>
 #include <libraries/string.h>
 #include <libraries/error.h>
-#include <kernel/debug/log.h>
+#include <libraries/log.h>
+#include <kernel/device/device.h>
+#include <drivers/display/display.h>
 #include <drivers/display/st7789.h>
 
-#define ST7789_DEVICE_MAX 1
+static gpio_configuration_t g_cs_pin_config = {
+    .mode = GPIO_MODE_OUTPUT,
+    .output_type = GPIO_OUTPUT_TYPE_PUSH_PULL,
+    .pull_resistor = GPIO_PULL_RESISTOR_NONE
+};
 
-#define ST7789_COMMAND_MODE(handle) gpio_write(g_st7789_devices[handle].config.dc_pin_handle, 0)
-#define ST7789_DATA_MODE(handle) gpio_write(g_st7789_devices[handle].config.dc_pin_handle, 1)
+static gpio_configuration_t g_dc_pin_config = {
+    .mode = GPIO_MODE_OUTPUT,
+    .output_type = GPIO_OUTPUT_TYPE_PUSH_PULL,
+    .pull_resistor = GPIO_PULL_RESISTOR_NONE
+};
 
-typedef struct st7789_device {
-    bool is_initialized;
-    st7789_configuration_t config;
-} st7789_device_t;
+static spi_configuration_t g_spi_interface_config = {
+    .mode = SPI_MODE_MASTER,
+    .clock_mode = SPI_CLOCK_MODE_0,
+    .significant_bit = SPI_SIGNIFICANT_BIT_MSB,
+    .com_mode = SPI_COM_MODE_FULL_DUPLEX,
+    .data_size = SPI_DATA_SIZE_8BIT
+};
 
 typedef enum {
     ST7789_COMMAND_NOP = 0x00,
@@ -103,121 +115,64 @@ typedef enum {
     ST7789_COMMAND_PROMACT = 0xfe,
 } st7789_command_t;
 
-static st7789_device_t g_st7789_devices[ST7789_DEVICE_MAX];
-
-static bool st7789_invalid_handle(st7789_handle_t handle)
+static void st7789_spi_enable(uint32_t cs_pin)
 {
-    return (handle >= ST7789_DEVICE_MAX || !g_st7789_devices[handle].is_initialized);
+    gpio_write(cs_pin, 0);
 }
 
-static error_t st7789_find_free_device(st7789_handle_t *handle)
+static void st7789_spi_disable(uint32_t cs_pin)
 {
-    if (!handle) {
-        return ERROR_INVALID;
-    }
-
-    for (uint32_t i = 0; i < ST7789_DEVICE_MAX; i++) {
-        if (!g_st7789_devices[i].is_initialized) {
-            *handle = i;
-            return SUCCESS;
-        }
-    }
-
-    return ERROR_NO_MEMORY;
+    gpio_write(cs_pin, 1);
 }
 
-static error_t st7789_send_command(st7789_handle_t handle, st7789_command_t command,
+static void st7789_command_mode(uint32_t dc_pin)
+{
+    gpio_write(dc_pin, 0);
+}
+
+static void st7789_data_mode(uint32_t dc_pin)
+{
+    gpio_write(dc_pin, 1);
+}
+
+static error_t st7789_send_command(const st7789_configuration_t *device,
+                                   st7789_command_t command,
                                    uint8_t *data, uint32_t data_size)
 {
-    if (st7789_invalid_handle(handle) ||
-        (data_size && !data)) {
+    if (data_size && !data) {
         return ERROR_INVALID;
     }
 
-    st7789_configuration_t *display = &g_st7789_devices[handle].config;
     uint8_t command_message[1] = {command};
 
-    spi_device_enable(display->spi_handle);
+    st7789_spi_enable(device->cs_pin);
 
-    ST7789_COMMAND_MODE(handle);
+    st7789_command_mode(device->dc_pin);
+    spi_write(device->interface_handle, &g_spi_interface_config, command_message, 1);
 
-    spi_write(display->spi_handle, command_message, 1);
-    ST7789_DATA_MODE(handle);
+    st7789_data_mode(device->dc_pin);
     if (data_size) {
-        spi_write(display->spi_handle, data, data_size);
+        spi_write(device->interface_handle, &g_spi_interface_config, data, data_size);
     }
 
-    spi_device_disable(display->spi_handle);
-
-    return SUCCESS;
-}
-static error_t st7789_send_command_repeat(st7789_handle_t handle, st7789_command_t command,
-                                          uint8_t *data, uint32_t data_size, uint32_t data_count)
-{
-    if (st7789_invalid_handle(handle) ||
-        (data_size && !data)) {
-        return ERROR_INVALID;
-    }
-
-    st7789_configuration_t *display = &g_st7789_devices[handle].config;
-    uint8_t command_message[1] = {command};
-
-    spi_device_enable(display->spi_handle);
-
-    ST7789_COMMAND_MODE(handle);
-    spi_write(display->spi_handle, command_message, 1);
-
-    system_timer_stop();
-    ST7789_DATA_MODE(handle);
-    while (data_count--) {
-        spi_write_dma(display->spi_handle, data, data_size);
-    }
-    spi_device_disable(display->spi_handle);
-    system_timer_start();
+    st7789_spi_disable(device->cs_pin);
     return SUCCESS;
 }
 
-static error_t st7789_render_framebuffer(st7789_handle_t handle, uint8_t *data, uint32_t width, uint32_t height)
-{
-    if (st7789_invalid_handle(handle) ||
-        (!data)) {
-        return ERROR_INVALID;
-    }
-
-    st7789_configuration_t *display = &g_st7789_devices[handle].config;
-    uint8_t command_message[1] = {ST7789_COMMAND_RAMWR};
-
-    spi_device_enable(display->spi_handle);
-
-    ST7789_COMMAND_MODE(handle);
-    spi_write(display->spi_handle, command_message, 1);
-
-    system_timer_stop();
-    ST7789_DATA_MODE(handle);
-
-    while (height--) {
-        spi_write_dma(display->spi_handle, data, sizeof(color16_t) * width);
-        data += sizeof(color16_t) * display->width;
-    }
-
-    spi_device_disable(display->spi_handle);
-    system_timer_start();
-    return SUCCESS;
-}
-
-static error_t st7789_set_frame_address(st7789_handle_t handle, uint16_t x0, uint16_t x1, uint16_t y0, uint16_t y1)
+static error_t st7789_set_frame_address(const st7789_configuration_t *device,
+                                        uint16_t x0, uint16_t x1, uint16_t y0, uint16_t y1)
 {
     error_t error;
 
     uint8_t x_bound[4] = {x0 >> 8, x0 & 0xFF, x1 >> 8, x1 & 0xFF};
     uint8_t y_bound[4] = {y0 >> 8, y0 & 0xFF, y1 >> 8, y1 & 0xFF};
 
-    error = st7789_send_command(handle, ST7789_COMMAND_CASET, x_bound, 4);
+    error = st7789_send_command(device, ST7789_COMMAND_CASET, x_bound, 4);
     if (error) {
         return error;
     }
 
-    error = st7789_send_command(handle, ST7789_COMMAND_RASET, y_bound, 4);
+    error = st7789_send_command(device, ST7789_COMMAND_RASET, y_bound, 4);
     if (error) {
         return error;
     }
@@ -225,146 +180,175 @@ static error_t st7789_set_frame_address(st7789_handle_t handle, uint16_t x0, uin
     return SUCCESS;
 }
 
-error_t st7789_init(st7789_configuration_t config, st7789_handle_t *handle)
+error_t st7789_init(void *config)
 {
-    if (!handle) {
+    if (!config) {
         return ERROR_INVALID;
     }
 
-    error_t error;
-    st7789_device_t *device;
-    uint8_t arg;
+    st7789_configuration_t *device_config = (st7789_configuration_t *)config;
+    uint32_t cs_pin = device_config->cs_pin;
+    uint32_t dc_pin = device_config->dc_pin;
 
-    error = st7789_find_free_device(handle);
+    error_t error;
+    error = gpio_init(cs_pin, &g_cs_pin_config);
     if (error) {
-        log_error(error, "Failed to find free st7789 device");
         return error;
     }
 
-    device = &g_st7789_devices[*handle];
-    device->is_initialized = true;
-    memcpy(&device->config, &config, sizeof(st7789_configuration_t));
+    error = gpio_init(dc_pin, &g_dc_pin_config);
+    if (error) {
+        return error;
+    }
+
+    return SUCCESS;
+}
+
+static error_t st7789_display_init(st7789_configuration_t *device_config)
+{
+    // TODO: Please implement a timer that doesnt require to be in
+    // task context so this can sit in regular init function
+
+    error_t error;
 
     // Reset Display
-    error = st7789_send_command(*handle, ST7789_COMMAND_SWRESET, 0, 0);
+    error = st7789_send_command(device_config, ST7789_COMMAND_SWRESET, 0, 0);
     if (error) {
-        log_error(error, "Failed to reset st7789 display");
         return error;
     }
     system_timer_wait_ms(150);
 
     // Wake up from sleep
-    error = st7789_send_command(*handle, ST7789_COMMAND_SLPOUT, 0, 0);
+    error = st7789_send_command(device_config, ST7789_COMMAND_SLPOUT, 0, 0);
     if (error) {
-        log_error(error, "Failed to wake display up from sleep");
         return error;
     }
     system_timer_wait_ms(10);
 
     // Set color format to 16bit
-    error = st7789_send_command(*handle, ST7789_COMMAND_COLMOD, &config.color_format, 1);
+    error = st7789_send_command(device_config, ST7789_COMMAND_COLMOD, &device_config->color_format, 1);
     if (error) {
-        log_error(error, "Failed to set color format");
         return error;
     }
 
     // Set memory access to "Top to bottom"
-    arg = 0;
-    error = st7789_send_command(*handle, ST7789_COMMAND_MADCTL, &arg, 1);
+    uint8_t arg = 0;
+    error = st7789_send_command(device_config, ST7789_COMMAND_MADCTL, &arg, 1);
     if (error) {
-        log_error(error, "Failed to set memory access");
         return error;
     }
 
-    error = st7789_set_frame_address(*handle, 0, 0, config.width-1, config.height-1);
+    error = st7789_set_frame_address(device_config, 0, 0, device_config->width-1, device_config->height-1);
     if (error) {
-        log_error(error, "Failed to set frame address");
         return error;
     }
 
     // Inverse display
-    error = st7789_send_command(*handle, ST7789_COMMAND_INVON, 0, 0);
+    error = st7789_send_command(device_config, ST7789_COMMAND_INVON, 0, 0);
     if (error) {
-        log_error(error, "Failed to inverse display");
         return error;
     }
 
     // Turn on normal display mode
-    error = st7789_send_command(*handle, ST7789_COMMAND_NORON, 0, 0);
+    error = st7789_send_command(device_config, ST7789_COMMAND_NORON, 0, 0);
     if (error) {
-        log_error(error, "Failed to set display to normal mode");
         return error;
     }
     system_timer_wait_ms(10);
 
     // Turn on display
-    error = st7789_send_command(*handle, ST7789_COMMAND_DISPON, 0, 0);
+    error = st7789_send_command(device_config, ST7789_COMMAND_DISPON, 0, 0);
     if (error) {
-        log_error(error, "Failed to turn on display");
         return error;
     }
+
     system_timer_wait_ms(100);
+    return SUCCESS;
+}
+
+error_t st7789_deinit(void *config)
+{
+    // TODO: Implement
+    return ERROR_NOT_IMPLEMENTED;
+}
+
+error_t st7789_read(void *config, uint8_t *data, uint32_t data_length)
+{
+    return ERROR_NOT_IMPLEMENTED;
+}
+
+error_t st7789_write(void *config, uint8_t *data, uint32_t data_length)
+{
+    return ERROR_NOT_IMPLEMENTED;
+}
+
+static error_t st7789_update_dirty_rect(const st7789_configuration_t *device,
+                                        uint32_t x, uint32_t y, uint32_t width, uint32_t height)
+{
+    uint8_t *data = (uint8_t *)((uint32_t)device->framebuffer + (y*width) + x);
+    uint8_t command_message[1] = {ST7789_COMMAND_RAMWR};
+    st7789_set_frame_address(device, x, x+width-1, y, y+height-1);
+
+    st7789_spi_enable(device->cs_pin);
+
+    st7789_command_mode(device->dc_pin);
+    spi_write(device->interface_handle, &g_spi_interface_config, command_message, 1);
+
+    system_timer_stop();
+
+    st7789_data_mode(device->dc_pin);
+    do {
+        spi_write_dma(device->interface_handle, &g_spi_interface_config, data, sizeof(uint16_t) * width);
+        data += sizeof(uint16_t) * width;
+    } while (height--);
+    st7789_spi_disable(device->cs_pin);
+
+    system_timer_start();
 
     return SUCCESS;
 }
 
-error_t st7789_deinit(st7789_handle_t handle)
+error_t st7789_ioctl(void *config, uint32_t cmd, void *arg)
 {
-    if (st7789_invalid_handle(handle)) {
-        return ERROR_INVALID;
-    }
-    // TODO: implement
-    return SUCCESS;
-}
-
-error_t st7789_draw_pixel(st7789_handle_t handle, uint32_t x, uint32_t y, color16_t color)
-{
-    if (st7789_invalid_handle(handle)) {
+    if (!config) {
         return ERROR_INVALID;
     }
 
-    st7789_set_frame_address(handle, x, x, y, y);
+    st7789_configuration_t *device_config = (st7789_configuration_t *)config;
 
-    st7789_send_command(handle, ST7789_COMMAND_RAMWR, (uint8_t *)&color, 2);
-
-    return SUCCESS;
-}
-
-error_t st7789_draw_filled_rect(st7789_handle_t handle, uint32_t x, uint32_t y, uint32_t width, uint32_t height, color16_t color)
-{
-    if (st7789_invalid_handle(handle)) {
+    switch (cmd) {
+    case DISPLAY_IOCTL_INIT:
+    {
+        // TODO: Please implement a timer that doesnt require to be in
+        // task context so this can sit in regular init function
+        st7789_display_init(device_config);
+        break;
+    }
+    case DISPLAY_IOCTL_GET_INFO:
+    {
+        display_ioctl_get_info_args_t *args = (display_ioctl_get_info_args_t *)arg;
+        args->width = device_config->width;
+        args->height = device_config->height;
+        args->framebuffer = device_config->framebuffer;
+        break;
+    }
+    case DISPLAY_IOCTL_DIRTY_RECT:
+    {
+        display_ioctl_dirty_rect_args_t *args = (display_ioctl_dirty_rect_args_t *)arg;
+        st7789_update_dirty_rect(device_config, args->x, args->y, args->width, args->height);
+        break;
+    }
+    default:
         return ERROR_INVALID;
     }
-
-    st7789_set_frame_address(handle, x, x+width-1, y, y+height-1);
-
-    color16_t buffer[width];
-    for (uint32_t i = 0; i < width; i++) {
-        buffer[i] = color;
-    }
-    st7789_send_command_repeat(handle, ST7789_COMMAND_RAMWR, (uint8_t *)buffer,
-                               sizeof(color16_t) * width, height);
-    return SUCCESS;
-}
-
-error_t st7789_draw_rect(st7789_handle_t handle, uint32_t x, uint32_t y, uint32_t width, uint32_t height, color16_t *data)
-{
-    if (st7789_invalid_handle(handle)) {
-        return ERROR_INVALID;
-    }
-
-    st7789_set_frame_address(handle, x, x+width-1, y, y+height-1);
-    st7789_render_framebuffer(handle, (uint8_t *)data, width, height);
 
     return SUCCESS;
 }
 
-error_t st7789_clear(st7789_handle_t handle)
-{
-    if (st7789_invalid_handle(handle)) {
-        return ERROR_INVALID;
-    }
-
-    st7789_configuration_t *config = &g_st7789_devices[handle].config;
-    return st7789_draw_filled_rect(handle, 0, 0, config->width, config->height, 0xffff);
-}
+device_ops_t g_st7789_device_ops = {
+    .init = st7789_init,
+    .deinit = st7789_deinit,
+    .read = st7789_read,
+    .write = st7789_write,
+    .ioctl = st7789_ioctl
+};

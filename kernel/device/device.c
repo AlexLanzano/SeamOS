@@ -86,7 +86,7 @@ static error_t device_get_device_from_name(const char *name, device_t **device)
     return ERROR_NOT_FOUND;
 }
 
-error_t device_init(const char *name, device_ops_t *ops, uint32_t interface_handle)
+error_t device_init(const char *name, device_ops_t *ops, void *config)
 {
     if (!name) {
         return ERROR_INVALID;
@@ -103,7 +103,8 @@ error_t device_init(const char *name, device_ops_t *ops, uint32_t interface_hand
     device_t *device = &g_devices[index];
     device->name = string_init_from_cstring(device->name_data, name, CONFIG_DEVICE_NAME_LENGTH);
     device->ops = ops;
-    device->interface_handle = interface_handle;
+    device->config = config;
+    device->ops->init(config);
     device->is_initialized = true;
 
     return SUCCESS;
@@ -161,7 +162,7 @@ error_t device_read(device_handle_t handle, uint8_t *data, uint32_t data_length)
     }
 
     device_table_entry_t *dte = &g_device_table[handle];
-    dte->device->ops->read(dte->device->interface_handle, data, data_length);
+    dte->device->ops->read(dte->device->config, data, data_length);
 
     return SUCCESS;
 }
@@ -173,7 +174,7 @@ error_t device_write(device_handle_t handle, uint8_t *data, uint32_t data_length
     }
 
     device_table_entry_t *dte = &g_device_table[handle];
-    dte->device->ops->write(dte->device->interface_handle, data, data_length);
+    dte->device->ops->write(dte->device->config, data, data_length);
 
     return SUCCESS;
 }
@@ -185,7 +186,7 @@ error_t device_ioctl(device_handle_t handle, uint32_t cmd, void *arg)
     }
 
     device_table_entry_t *dte = &g_device_table[handle];
-    dte->device->ops->ioctl(dte->device->interface_handle, cmd, arg);
+    dte->device->ops->ioctl(dte->device->config, cmd, arg);
 
     return SUCCESS;
 }

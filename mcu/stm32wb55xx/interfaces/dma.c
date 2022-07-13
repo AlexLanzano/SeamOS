@@ -1,172 +1,285 @@
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <mcu/stm32wb55xx/stm32wb55xx.h>
-#include <mcu/stm32wb55xx/dma.h>
+#include <mcu/stm32wb55xx/interfaces/dma.h>
+#include <mcu/interfaces/dma.h>
 #include <libraries/error.h>
 #include <libraries/string.h>
 
-#define DMA_CHANNEL_MAX 7
+#define DMA_MAX_INTERFACES 2
+
+// TODO: Add multi channel support
 
 typedef struct dma_channel {
-    bool is_initialized;
-    dma_configuration_t config;
+    DMA_Channel_TypeDef *channel;
+    DMAMUX_Channel_TypeDef *mux_channel;
+    void (*callback)(uint32_t cb_handle);
+    uint32_t callback_handle;
 } dma_channel_t;
 
-dma_channel_t g_dma_channels[DMA_CHANNEL_MAX];
+dma_channel_t g_dma_channel = {
+    .channel = DMA1_Channel1,
+    .mux_channel = DMAMUX1_Channel0
+};
 
-static bool dma_invalid_handle(dma_handle_t handle)
+/* typedef struct dma_interface { */
+/*     dma_channel_t channels[7]; */
+/* } dma_interface_t; */
+
+/* static dma_interface_t g_dma1 = {.channels = */
+/*                                  {{.channel = DMA1_Channel1, .mux_channel = DMAMUX1_Channel0}, */
+/*                                   {.channel = DMA1_Channel2, .mux_channel = DMAMUX1_Channel1}, */
+/*                                   {.channel = DMA1_Channel3, .mux_channel = DMAMUX1_Channel2}, */
+/*                                   {.channel = DMA1_Channel4, .mux_channel = DMAMUX1_Channel3}, */
+/*                                   {.channel = DMA1_Channel5, .mux_channel = DMAMUX1_Channel4}, */
+/*                                   {.channel = DMA1_Channel6, .mux_channel = DMAMUX1_Channel5}, */
+/*                                   {.channel = DMA1_Channel7, .mux_channel = DMAMUX1_Channel6}}}; */
+
+/* static dma_interface_t g_dma2 = {.channels = */
+/*                                  {{.channel = DMA2_Channel1, .mux_channel = DMAMUX1_Channel7}, */
+/*                                   {.channel = DMA2_Channel2, .mux_channel = DMAMUX1_Channel8}, */
+/*                                   {.channel = DMA2_Channel3, .mux_channel = DMAMUX1_Channel9}, */
+/*                                   {.channel = DMA2_Channel4, .mux_channel = DMAMUX1_Channel10}, */
+/*                                   {.channel = DMA2_Channel5, .mux_channel = DMAMUX1_Channel11}, */
+/*                                   {.channel = DMA2_Channel6, .mux_channel = DMAMUX1_Channel12}, */
+/*                                   {.channel = DMA2_Channel7, .mux_channel = DMAMUX1_Channel13}}}; */
+
+/* static dma_interface_t *g_dma_interfaces[DMA_MAX_INTERFACES] = {&g_dma1, &g_dma2}; */
+
+static bool dma_invalid_handle(uint32_t handle)
 {
-    return (handle >= DMA_CHANNEL_MAX || !g_dma_channels[handle].is_initialized);
+    return handle >= DMA_MAX_INTERFACES;
 }
 
-static error_t dma_find_free_channel(dma_handle_t *handle)
-{
-    if (!handle) {
-        return ERROR_INVALID;
-    }
+/* static dma_channel_t *dma_get_free_channel(uint32_t handle) */
+/* { */
+/*     dma_interface_t *interface = g_dma_interfaces[handle]; */
+/*     uint32_t channel_index; */
+/*     for (channel_index = 0; channel_index < 7; channel_index++) { */
+/*         if (!interface->channels[channel_index].in_use) { */
+/*             return &interface->channels[channel_index]; */
+/*         } */
+/*     } */
 
-    dma_handle_t dma_handle;
-    for (dma_handle = 0; dma_handle < DMA_CHANNEL_MAX; dma_handle++) {
-        if (!g_dma_channels[dma_handle].is_initialized) {
-            *handle = dma_handle;
-            return SUCCESS;
-        }
-    }
+/*     return NULL; */
+/* } */
 
-    return ERROR_NO_MEMORY;
-}
 
-static DMA_Channel_TypeDef *dma_get_channel_from_handle(const dma_handle_t handle)
-{
-    if (handle >= DMA_CHANNEL_MAX) {
-        return 0;
-    }
-
-    return (DMA_Channel_TypeDef *)(DMA1_Channel1_BASE + (sizeof(DMA_Channel_TypeDef) * handle));
-}
-
-static DMAMUX_Channel_TypeDef *dma_get_mux_channel_from_handle(const dma_handle_t handle)
-{
-    if (handle >= DMA_CHANNEL_MAX) {
-        return 0;
-    }
-
-    return (DMAMUX_Channel_TypeDef *)(DMAMUX1_Channel0_BASE + (sizeof(DMAMUX_Channel_TypeDef) * handle));
-}
-
-static error_t dma_configure_channel(const dma_handle_t handle,
+static error_t dma_configure_channel(DMA_Channel_TypeDef *dma_channel,
+                                     dma_configuration_t *config,
                                      const uint32_t dest,
                                      const uint32_t src,
                                      const uint32_t length)
 {
-    if (dma_invalid_handle(handle)) {
-        return ERROR_INVALID;
-    }
-
-    DMA_Channel_TypeDef *dma_channel = dma_get_channel_from_handle(handle);
-    dma_configuration_t config = g_dma_channels[handle].config;
-
-    switch (config.mode) {
+    switch (config->mode) {
     case DMA_MODE_MEMORY_TO_MEMORY:
         dma_channel->CCR |= DMA_CCR_MEM2MEM |
-                           (config.increment_source << DMA_CCR_PINC_Pos) |
-                           (config.increment_destination << DMA_CCR_MINC_Pos);
+                           (config->increment_source << DMA_CCR_PINC_Pos) |
+                           (config->increment_destination << DMA_CCR_MINC_Pos);
         dma_channel->CPAR = src;
         dma_channel->CMAR = dest;
         break;
-    case DMA_MODE_MEMORY_TO_PERIPHERAL:
+    case DMA_MODE_MEMORY_TO_INTERFACE:
         dma_channel->CCR |= DMA_CCR_DIR |
-                           (config.increment_source << DMA_CCR_MINC_Pos) |
-                           (config.increment_destination << DMA_CCR_PINC_Pos);
+                           (config->increment_source << DMA_CCR_MINC_Pos) |
+                           (config->increment_destination << DMA_CCR_PINC_Pos);
         dma_channel->CPAR = dest;
         dma_channel->CMAR = src;
         break;
-    case DMA_MODE_PERIPHERAL_TO_MEMORY:
-        dma_channel->CCR |= (config.increment_source << DMA_CCR_PINC_Pos) |
-                            (config.increment_destination << DMA_CCR_MINC_Pos);
+    case DMA_MODE_INTERFACE_TO_MEMORY:
+        dma_channel->CCR |= (config->increment_source << DMA_CCR_PINC_Pos) |
+                            (config->increment_destination << DMA_CCR_MINC_Pos);
         dma_channel->CPAR = src;
         dma_channel->CMAR = dest;
         break;
-    case DMA_MODE_PERIPHERAL_TO_PERIPHERAL:
-        dma_channel->CCR |= (config.increment_source << DMA_CCR_MINC_Pos) |
-                            (config.increment_destination << DMA_CCR_PINC_Pos);
+    case DMA_MODE_INTERFACE_TO_INTERFACE:
+        dma_channel->CCR |= (config->increment_source << DMA_CCR_MINC_Pos) |
+                            (config->increment_destination << DMA_CCR_PINC_Pos);
         dma_channel->CPAR = dest;
         dma_channel->CMAR = src;
         break;
     }
 
-    NVIC_EnableIRQ(DMA1_Channel1_IRQn + handle);
-    if (config.half_transfer_handler) {
-        dma_channel->CCR |= DMA_CCR_TCIE;
-    }
+    NVIC_EnableIRQ(DMA1_Channel1_IRQn);
 
-    if (config.transfer_complete_handler) {
-        dma_channel->CCR |= DMA_CCR_HTIE;
-    }
-
-    if (config.transfer_error_handler) {
-        dma_channel->CCR |= DMA_CCR_TEIE;
-    }
+    dma_channel->CCR |= DMA_CCR_TCIE;
+    dma_channel->CCR |= DMA_CCR_TEIE;
 
     dma_channel->CNDTR = length;
     return SUCCESS;
 }
 
-error_t dma_init(dma_configuration_t config, dma_handle_t *handle)
+static dma_request_id_t dma_get_request_id(uint32_t *addr)
 {
-    if (!handle) {
+    if (addr == &SPI1->DR) {
+        return DMA_REQUEST_ID_SPI1_TX;
+    } else {
+        // TODO: Implement more interfaces
+    }
+    return DMA_REQUEST_ID_MEMORY_TO_MEMORY;
+}
+
+error_t dma_request(uint32_t handle, dma_configuration_t *config, void *dest, void *src, uint32_t size,
+                    void (*callback)(uint32_t handle), uint32_t cb_handle)
+{
+    if (dma_invalid_handle(handle) || !config || !callback) {
         return ERROR_INVALID;
     }
 
-    error_t error;
-    DMAMUX_Channel_TypeDef *dmamux;
+    volatile dma_channel_t *channel = &g_dma_channel;
+    // TODO: add timeout
+    while (channel->channel->CCR & DMA_CCR_EN);
 
-    error = dma_find_free_channel(handle);
-    if (error) {
-        return error;
+    if (config->mode == DMA_MODE_MEMORY_TO_INTERFACE) {
+        channel->mux_channel->CCR |= dma_get_request_id(dest) << DMAMUX_CxCR_DMAREQ_ID_Pos;
+    } else if (config->mode == DMA_MODE_INTERFACE_TO_MEMORY) {
+        channel->mux_channel->CCR |= dma_get_request_id(src) << DMAMUX_CxCR_DMAREQ_ID_Pos;
     }
 
-    memcpy(&g_dma_channels[*handle].config, &config, sizeof(dma_configuration_t));
+    channel->callback = callback;
+    channel->callback_handle = cb_handle;
 
-    dmamux = dma_get_mux_channel_from_handle(*handle);
-    dmamux->CCR |= config.request << DMAMUX_CxCR_DMAREQ_ID_Pos;
-
-    g_dma_channels[*handle].is_initialized = true;
-
-    return SUCCESS;
-}
-error_t dma_start(dma_handle_t handle, uint32_t dest, uint32_t src, uint32_t size)
-{
-    if (dma_invalid_handle(handle)) {
-        return ERROR_INVALID;
-    }
-
-    DMA_Channel_TypeDef *dma_channel = dma_get_channel_from_handle(handle);
-    while (dma_channel->CCR & DMA_CCR_EN);
-    dma_configure_channel(handle, dest, src, size);
-    dma_channel->CCR |= DMA_CCR_EN;
+    dma_configure_channel(channel->channel, config, (uint32_t)dest, (uint32_t)src, size);
+    channel->channel->CCR |= DMA_CCR_EN;
     return SUCCESS;
 }
 
-error_t dma_stop(dma_handle_t handle)
-{
-    if (dma_invalid_handle(handle)) {
-        return ERROR_INVALID;
-    }
-
-    DMA_Channel_TypeDef *dma_channel = dma_get_channel_from_handle(handle);
-
-    dma_channel->CCR &= ~DMA_CCR_EN;
-    NVIC_DisableIRQ(DMA1_Channel1_IRQn + handle);
-
-    return SUCCESS;
-}
+/* void dma_irq_handler(dma_interface_t *dma, uint32_t channel) */
+/* { */
+/*     dma->channels[channel].in_use = false; */
+/*     dma->channels[channel].channel->CCR &= ~DMA_CCR_EN; */
+/*     dma_disable_channel_irq(dma->channels[channel].channel); */
+/*     dma->channels[channel].callback(dma->channels[channel].callback_handle); */
+/* } */
 
 void DMA1_Channel1_IRQHandler()
 {
-    dma_configuration_t *config = &g_dma_channels[0].config;
     if (DMA1->ISR & DMA_INTERRUPT_STATUS_TRANSFER_COMPLETE ||
-        DMA1->ISR & DMA_INTERRUPT_STATUS_TRANSFER_ERROR) {
-        config->transfer_complete_handler(0);
+        DMA1->ISR & DMA_INTERRUPT_STATUS_TRANSFER_ERROR)
+    {
+        DMA1->IFCR = 0xffffffff;
+        g_dma_channel.channel->CCR &= ~DMA_CCR_EN;
+        g_dma_channel.callback(g_dma_channel.callback_handle);
+        NVIC_DisableIRQ(DMA1_Channel1_IRQn);
+        //dma_irq_handler(&g_dma1, 0);
+
     }
 }
+
+/* void DMA1_Channel2_IRQHandler() */
+/* { */
+/*     if (DMA1->ISR & DMA_INTERRUPT_STATUS_TRANSFER_COMPLETE || */
+/*         DMA1->ISR & DMA_INTERRUPT_STATUS_TRANSFER_ERROR) { */
+/*         DMA1->IFCR = 0xffffffff; */
+/*         dma_irq_handler(&g_dma1, 1); */
+/*     } */
+/* } */
+
+/* void DMA1_Channel3_IRQHandler() */
+/* { */
+/*     if (DMA1->ISR & DMA_INTERRUPT_STATUS_TRANSFER_COMPLETE || */
+/*         DMA1->ISR & DMA_INTERRUPT_STATUS_TRANSFER_ERROR) { */
+/*         DMA1->IFCR = 0xffffffff; */
+/*         dma_irq_handler(&g_dma1, 2); */
+/*     } */
+/* } */
+
+/* void DMA1_Channel4_IRQHandler() */
+/* { */
+/*     if (DMA1->ISR & DMA_INTERRUPT_STATUS_TRANSFER_COMPLETE || */
+/*         DMA1->ISR & DMA_INTERRUPT_STATUS_TRANSFER_ERROR) { */
+/*         DMA1->IFCR = 0xffffffff; */
+/*         dma_irq_handler(&g_dma1, 3); */
+/*     } */
+/* } */
+
+/* void DMA1_Channel5_IRQHandler() */
+/* { */
+/*     if (DMA1->ISR & DMA_INTERRUPT_STATUS_TRANSFER_COMPLETE || */
+/*         DMA1->ISR & DMA_INTERRUPT_STATUS_TRANSFER_ERROR) { */
+/*         DMA1->IFCR = 0xffffffff; */
+/*         dma_irq_handler(&g_dma1, 4); */
+/*     } */
+/* } */
+
+/* void DMA1_Channel6_IRQHandler() */
+/* { */
+/*     if (DMA1->ISR & DMA_INTERRUPT_STATUS_TRANSFER_COMPLETE || */
+/*         DMA1->ISR & DMA_INTERRUPT_STATUS_TRANSFER_ERROR) { */
+/*         DMA1->IFCR = 0xffffffff; */
+/*         dma_irq_handler(&g_dma1, 5); */
+/*     } */
+/* } */
+
+/* void DMA1_Channel7_IRQHandler() */
+/* { */
+/*     if (DMA1->ISR & DMA_INTERRUPT_STATUS_TRANSFER_COMPLETE || */
+/*         DMA1->ISR & DMA_INTERRUPT_STATUS_TRANSFER_ERROR) { */
+/*         DMA1->IFCR = 0xffffffff; */
+/*         dma_irq_handler(&g_dma1, 6); */
+/*     } */
+/* } */
+
+/* void DMA2_Channel1_IRQHandler() */
+/* { */
+/*     if (DMA2->ISR & DMA_INTERRUPT_STATUS_TRANSFER_COMPLETE || */
+/*         DMA2->ISR & DMA_INTERRUPT_STATUS_TRANSFER_ERROR) { */
+/*         DMA2->IFCR = 0xffffffff; */
+/*         dma_irq_handler(&g_dma2, 0); */
+/*     } */
+/* } */
+
+/* void DMA2_Channel2_IRQHandler() */
+/* { */
+/*     if (DMA2->ISR & DMA_INTERRUPT_STATUS_TRANSFER_COMPLETE || */
+/*         DMA2->ISR & DMA_INTERRUPT_STATUS_TRANSFER_ERROR) { */
+/*         DMA2->IFCR = 0xffffffff; */
+/*         dma_irq_handler(&g_dma2, 1); */
+/*     } */
+/* } */
+
+/* void DMA2_Channel3_IRQHandler() */
+/* { */
+/*     if (DMA2->ISR & DMA_INTERRUPT_STATUS_TRANSFER_COMPLETE || */
+/*         DMA2->ISR & DMA_INTERRUPT_STATUS_TRANSFER_ERROR) { */
+/*         DMA2->IFCR = 0xffffffff; */
+/*         dma_irq_handler(&g_dma2, 2); */
+/*     } */
+/* } */
+
+/* void DMA2_Channel4_IRQHandler() */
+/* { */
+/*     if (DMA2->ISR & DMA_INTERRUPT_STATUS_TRANSFER_COMPLETE || */
+/*         DMA2->ISR & DMA_INTERRUPT_STATUS_TRANSFER_ERROR) { */
+/*         DMA2->IFCR = 0xffffffff; */
+/*         dma_irq_handler(&g_dma2, 3); */
+/*     } */
+/* } */
+
+/* void DMA2_Channel5_IRQHandler() */
+/* { */
+/*     if (DMA2->ISR & DMA_INTERRUPT_STATUS_TRANSFER_COMPLETE || */
+/*         DMA2->ISR & DMA_INTERRUPT_STATUS_TRANSFER_ERROR) { */
+/*         DMA2->IFCR = 0xffffffff; */
+/*         dma_irq_handler(&g_dma2, 4); */
+/*     } */
+/* } */
+
+/* void DMA2_Channel6_IRQHandler() */
+/* { */
+/*     if (DMA2->ISR & DMA_INTERRUPT_STATUS_TRANSFER_COMPLETE || */
+/*         DMA2->ISR & DMA_INTERRUPT_STATUS_TRANSFER_ERROR) { */
+/*         DMA2->IFCR = 0xffffffff; */
+/*         dma_irq_handler(&g_dma2, 5); */
+/*     } */
+/* } */
+
+/* void DMA2_Channel7_IRQHandler() */
+/* { */
+/*     if (DMA2->ISR & DMA_INTERRUPT_STATUS_TRANSFER_COMPLETE || */
+/*         DMA2->ISR & DMA_INTERRUPT_STATUS_TRANSFER_ERROR) { */
+/*         DMA2->IFCR = 0xffffffff; */
+/*         dma_irq_handler(&g_dma2, 6); */
+/*     } */
+/* } */

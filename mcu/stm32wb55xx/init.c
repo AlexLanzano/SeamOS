@@ -4,6 +4,7 @@
 #include <mcu/stm32wb55xx/rcc.h>
 #include <mcu/stm32wb55xx/interfaces/gpio.h>
 #include <mcu/stm32wb55xx/interfaces/uart.h>
+#include <mcu/stm32wb55xx/interfaces/spi.h>
 #include <mcu/stm32wb55xx//interfaces/i2c.h>
 
 extern uint32_t _estack[];
@@ -37,18 +38,18 @@ static void init_peripherals()
 
     #ifdef CONFIG_ENABLE_SPI1
     rcc_enable_spi1_clock();
-    spi_interface_init(SPI1,
-                       CONFIG_PIN_SPI1_SCK,
-                       CONFIG_PIN_SPI1_MISO,
-                       CONFIG_PIN_SPI1_MOSI);
+    spi_enable(SPI1,
+               CONFIG_PIN_SPI1_SCK,
+               CONFIG_PIN_SPI1_MISO,
+               CONFIG_PIN_SPI1_MOSI);
     #endif
 
     #ifdef CONFIG_ENABLE_SPI2
     rcc_enable_spi2_clock();
-    spi_interface_init(SPI2,
-                       CONFIG_PIN_SPI2_SCK,
-                       CONFIG_PIN_SPI2_MISO,
-                       CONFIG_PIN_SPI2_MOSI);
+    spi_enable(SPI2,
+               CONFIG_PIN_SPI2_SCK,
+               CONFIG_PIN_SPI2_MISO,
+               CONFIG_PIN_SPI2_MOSI);
     #endif
 
     #ifdef CONFIG_ENABLE_I2C1
@@ -67,6 +68,33 @@ static void init_peripherals()
                         CONFIG_PIN_SAI1_SD,
                         CONFIG_PIN_SAI1_FS);
     #endif
+
+    #ifdef CONFIG_ENABLE_DMAMUX1
+    rcc_enable_dmamux1_clock();
+    #endif
+
+    #ifdef CONFIG_ENABLE_DMA1
+    rcc_enable_dma1_clock();
+    NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+    NVIC_EnableIRQ(DMA1_Channel2_IRQn);
+    NVIC_EnableIRQ(DMA1_Channel3_IRQn);
+    NVIC_EnableIRQ(DMA1_Channel4_IRQn);
+    NVIC_EnableIRQ(DMA1_Channel5_IRQn);
+    NVIC_EnableIRQ(DMA1_Channel6_IRQn);
+    NVIC_EnableIRQ(DMA1_Channel7_IRQn);
+    #endif
+
+    #ifdef CONFIG_ENABLE_DMA2
+    NVIC_EnableIRQ(DMA2_Channel1_IRQn);
+    NVIC_EnableIRQ(DMA2_Channel2_IRQn);
+    NVIC_EnableIRQ(DMA2_Channel3_IRQn);
+    NVIC_EnableIRQ(DMA2_Channel4_IRQn);
+    NVIC_EnableIRQ(DMA2_Channel5_IRQn);
+    NVIC_EnableIRQ(DMA2_Channel6_IRQn);
+    NVIC_EnableIRQ(DMA2_Channel7_IRQn);
+    #endif
+
+
 }
 
 static void init_clock()
