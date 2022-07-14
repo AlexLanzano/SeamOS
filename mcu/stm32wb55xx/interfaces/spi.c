@@ -14,9 +14,10 @@
 struct spi_interface {
     SPI_TypeDef *spi;
     spi_configuration_t config;
+    dma_configuration_t dma_config;
 };
 
-static struct spi_interface g_spi_interfaces[MAX_SPI_INTERFACES] = {{.spi = SPI1},
+static struct spi_interface g_spi_interfaces[MAX_SPI_INTERFACES] = {{.spi = SPI1, .dma_config = g_sp},
                                                                     {.spi = SPI2}};
 
 static bool spi_invalid_handle(uint32_t handle)
@@ -182,6 +183,11 @@ error_t spi_read_write(uint32_t handle, spi_configuration_t *config, uint8_t *rd
     return SUCCESS;
 }
 
+static void spi_read_dma_cb()
+{
+
+}
+
 error_t spi_read_dma(uint32_t spi_handle, spi_configuration_t *config,
                      uint32_t dma_handle, uint8_t *data, uint32_t length)
 {
@@ -189,8 +195,13 @@ error_t spi_read_dma(uint32_t spi_handle, spi_configuration_t *config,
     return SUCCESS;
 }
 
-error_t spi_write_dma(uint32_t spi_handle, spi_configuration_t *config,
-                      uint32_t dma_handle, uint8_t *data, uint32_t length)
+static void spi_write_dma_cb()
+{
+    SPI_TypeDef *spi = g_spi_interfaces[handle].spi;
+    spi->CR2 &= ~SPI_CR2_TXDMAEN;
+}
+
+error_t spi_write_dma(uint32_t spi_handle, spi_configuration_t *config, uint8_t *data, uint32_t length)
 {
     if (spi_invalid_handle(spi_handle)) {
         return ERROR_INVALID;
@@ -199,8 +210,21 @@ error_t spi_write_dma(uint32_t spi_handle, spi_configuration_t *config,
     SPI_TypeDef *spi = g_spi_interfaces[spi_handle].spi;
     spi_configure(spi,config);
 
+    dma_configuration_t dma_config = {0};
+    mcu_dma_configuration_t mcu_dma_config = {0};
+    dma_config.mode = DMA_MODE_MEMORY_TO_PERIPHERAL;
+    dma_config.increment_source = true;
+    dma_config.increment_destination = false;
+    dma_config.mcu_config = &mcu_dma_config;
+    if (spi == SPI1) {
+        dma_mcu_config.request_id = DMA_REQUEST_ID_SPI1_TX;
+    } else if (spi == SPI2) {
+        dma_mcu_config.request_id = DMA_REQUEST_ID_SPI2_TX;
+    } else {
+        return ERROR_INVALID;
+    }
 
-    dma_start(dma_handle, (uint32_t)&spi->DR, (uint32_t)data, length);
+    dma_request(&dma_config, &spi->DR, data, length, spi_write_dma_cb);
     spi->CR2 |= SPI_CR2_TXDMAEN;
 
     return SUCCESS;

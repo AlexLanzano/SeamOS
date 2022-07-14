@@ -68,6 +68,32 @@ static void init_peripherals()
                         CONFIG_PIN_SAI1_SD,
                         CONFIG_PIN_SAI1_FS);
     #endif
+
+    #ifdef CONFIG_ENABLE_DMAMUX1
+    rcc_enable_dmamux1_clock();
+    #endif
+
+    #ifdef CONFIG_ENABLE_DMA1
+    NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+    NVIC_EnableIRQ(DMA1_Channel2_IRQn);
+    NVIC_EnableIRQ(DMA1_Channel3_IRQn);
+    NVIC_EnableIRQ(DMA1_Channel4_IRQn);
+    NVIC_EnableIRQ(DMA1_Channel5_IRQn);
+    NVIC_EnableIRQ(DMA1_Channel6_IRQn);
+    NVIC_EnableIRQ(DMA1_Channel7_IRQn);
+    #endif
+
+    #ifdef CONFIG_ENABLE_DMA2
+    NVIC_EnableIRQ(DMA2_Channel1_IRQn);
+    NVIC_EnableIRQ(DMA2_Channel2_IRQn);
+    NVIC_EnableIRQ(DMA2_Channel3_IRQn);
+    NVIC_EnableIRQ(DMA2_Channel4_IRQn);
+    NVIC_EnableIRQ(DMA2_Channel5_IRQn);
+    NVIC_EnableIRQ(DMA2_Channel6_IRQn);
+    NVIC_EnableIRQ(DMA2_Channel7_IRQn);
+    #endif
+
+
 }
 
 static void init_clock()

@@ -34,16 +34,16 @@
                         (gpio_t){.pin=7,.port=GPIOA},  \
                         (gpio_t){.pin=8,.port=GPIOA},  \
                         (gpio_t){.pin=9,.port=GPIOA},  \
-                        (gpio_t){.pin=10,.port=GPIOB}, \
-                        (gpio_t){.pin=11,.port=GPIOB}, \
-                        (gpio_t){.pin=12,.port=GPIOB}, \
-                        (gpio_t){.pin=13,.port=GPIOB}, \
-                        (gpio_t){.pin=14,.port=GPIOB}, \
-                        (gpio_t){.pin=15,.port=GPIOB}, \
-                        (gpio_t){.pin=16,.port=GPIOB}, \
-                        (gpio_t){.pin=17,.port=GPIOB}, \
-                        (gpio_t){.pin=18,.port=GPIOB}, \
-                        (gpio_t){.pin=19,.port=GPIOB}}
+                        (gpio_t){.pin=15,.port=GPIOA}, \
+                        (gpio_t){.pin=0,.port=GPIOB}, \
+                        (gpio_t){.pin=1,.port=GPIOB}, \
+                        (gpio_t){.pin=10,.port=GPIOA}, \
+                        (gpio_t){.pin=4,.port=GPIOB}, \
+                        (gpio_t){.pin=5,.port=GPIOB}, \
+                        (gpio_t){.pin=6,.port=GPIOB}, \
+                        (gpio_t){.pin=7,.port=GPIOB}, \
+                        (gpio_t){.pin=8,.port=GPIOB}, \
+                        (gpio_t){.pin=9,.port=GPIOB}}
 
 // GPIO Config
 #define CONFIG_GPIO_SPEED GPIO_OUTPUT_SPEED_FAST
