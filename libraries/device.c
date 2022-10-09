@@ -21,7 +21,7 @@ error_t device_close(device_handle_t handle)
     return SUCCESS;
 }
 
-error_t device_read(device_handle_t handle, uint8_t *data, uint32_t data_length)
+error_t device_read(device_handle_t handle, void *data, uint32_t data_length)
 {
     if (!data) {
         return ERROR_INVALID;
@@ -32,7 +32,7 @@ error_t device_read(device_handle_t handle, uint8_t *data, uint32_t data_length)
     return SUCCESS;
 }
 
-error_t device_write(device_handle_t handle, uint8_t *data, uint32_t data_length)
+error_t device_write(device_handle_t handle, void *data, uint32_t data_length)
 {
     if (!data) {
         return ERROR_INVALID;

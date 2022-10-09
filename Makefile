@@ -49,6 +49,6 @@ $(SEAMOS_LIB): $(SEAMOS_OBJECTS)
 
 .PHONY: clean
 clean:
-	rm -rf $(DEPDIR) $(SEAMOS_OBJECTS) $(SEAMOS_LIB)
+	rm -rf $(DEPDIR) $(SEAMOS_OBJECTS) $(SEAMOS_LIB) config.h
 
 include $(DEPENDS)

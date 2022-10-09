@@ -22,21 +22,24 @@ static error_t log_deinit(void *config)
     return uart_deinit(log_config->interface_handle);
 }
 
-static error_t log_read(void *config, uint8_t *data, uint32_t data_length)
+static error_t log_read(void *config, void *buffer, uint32_t data_length)
 {
     if (!config) {
         return ERROR_INVALID;
     }
     log_configuration_t *log_config = (log_configuration_t *)config;
+    uint8_t *data = (uint8_t *)buffer;
     return uart_read(log_config->interface_handle, data, data_length);
 }
 
-static error_t log_write(void *config, uint8_t *data, uint32_t data_length)
+static error_t log_write(void *config, void *buffer, uint32_t data_length)
 {
     if (!config) {
         return ERROR_INVALID;
     }
+
     log_configuration_t *log_config = (log_configuration_t *)config;
+    uint8_t *data = (uint8_t *)buffer;
     return uart_write(log_config->interface_handle, data, data_length);
 }
 

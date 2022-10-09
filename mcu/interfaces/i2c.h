@@ -5,16 +5,21 @@
 #include <stdbool.h>
 #include <libraries/error.h>
 
-typedef uint32_t i2c_handle_t;
-typedef struct i2c_interface_configuration i2c_interface_configuration_t;
-typedef struct i2c_device_configuration i2c_device_configuration_t;
+typedef enum i2c_address_mode {
+    I2C_ADDRESS_MODE_7BIT,
+    I2C_ADDRESS_MODE_8BIT,
+    I2C_ADDRESS_MODE_10BIT
+} i2c_address_mode_t;
 
-error_t i2c_stop(i2c_handle_t handle);
-error_t i2c_read(i2c_handle_t handle, uint8_t *data, uint32_t size);
-error_t i2c_read_byte(i2c_handle_t handle, uint8_t *data);
-error_t i2c_write(i2c_handle_t handle, uint8_t *data, uint32_t size);
-error_t i2c_write_byte(i2c_handle_t handle, uint8_t data);
-error_t i2c_device_init(i2c_device_configuration_t device, i2c_handle_t *handle);
-error_t i2c_device_deinit(i2c_handle_t handle);
+typedef struct i2c_configuration {
+    uint32_t address;
+    i2c_address_mode_t address_mode;
+} i2c_configuration_t;
+
+error_t i2c_stop(uint32_t handle);
+error_t i2c_read(uint32_t handle, i2c_configuration_t *config, uint8_t *data, uint32_t size);
+error_t i2c_read_byte(uint32_t handle, i2c_configuration_t *config, uint8_t *data);
+error_t i2c_write(uint32_t handle, i2c_configuration_t *config, uint8_t *data, uint32_t size);
+error_t i2c_write_byte(uint32_t handle, i2c_configuration_t *config, uint8_t data);
 
 #endif

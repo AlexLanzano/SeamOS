@@ -30,24 +30,24 @@ error_t led_deinit(void *config)
     return gpio_deinit(led_config->pin);
 }
 
-error_t led_read(void *config, uint8_t *data, uint32_t data_length)
+error_t led_read(void *config, void *data, uint32_t data_length)
 {
     if (!config || !data) {
         return ERROR_INVALID;
     }
 
     led_configuration_t *led_config = (led_configuration_t *)config;
-    return gpio_read(led_config->pin, data);
+    return gpio_read(led_config->pin, (uint8_t *)data);
 }
 
-error_t led_write(void *config, uint8_t *data, uint32_t data_length)
+error_t led_write(void *config, void *data, uint32_t data_length)
 {
     if (!config || !data) {
         return ERROR_INVALID;
     }
 
     led_configuration_t *led_config = (led_configuration_t *)config;
-    return gpio_write(led_config->pin, *data);
+    return gpio_write(led_config->pin, *(uint8_t *)data);
 }
 
 error_t led_ioctl(void *config, uint32_t cmd, void *arg)

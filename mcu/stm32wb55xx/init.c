@@ -54,10 +54,10 @@ static void init_peripherals()
 
     #ifdef CONFIG_ENABLE_I2C1
     rcc_enable_i2c1_clock();
-    i2c_interface_init(I2C1,
-                       CONFIG_PIN_I2C1_SCL,
-                       CONFIG_PIN_I2C1_SDA,
-                       CONFIG_I2C1_TIMING);
+    i2c_enable(I2C1,
+               CONFIG_PIN_I2C1_SCL,
+               CONFIG_PIN_I2C1_SDA,
+               CONFIG_I2C1_TIMING);
     #endif
 
     #ifdef CONFIG_ENABLE_SAI1

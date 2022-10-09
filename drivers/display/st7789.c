@@ -272,12 +272,12 @@ error_t st7789_deinit(void *config)
     return ERROR_NOT_IMPLEMENTED;
 }
 
-error_t st7789_read(void *config, uint8_t *data, uint32_t data_length)
+error_t st7789_read(void *config, void *data, uint32_t data_length)
 {
     return ERROR_NOT_IMPLEMENTED;
 }
 
-error_t st7789_write(void *config, uint8_t *data, uint32_t data_length)
+error_t st7789_write(void *config, void *data, uint32_t data_length)
 {
     return ERROR_NOT_IMPLEMENTED;
 }

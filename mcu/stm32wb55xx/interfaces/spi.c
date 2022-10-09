@@ -11,13 +11,8 @@
 
 #define MAX_SPI_INTERFACES 2
 volatile int8_t g_dma_in_use =false;
-struct spi_interface {
-    SPI_TypeDef *spi;
-    spi_configuration_t config;
-};
 
-static struct spi_interface g_spi_interfaces[MAX_SPI_INTERFACES] = {{.spi = SPI1},
-                                                                    {.spi = SPI2}};
+static SPI_TypeDef *g_spi_interfaces[MAX_SPI_INTERFACES] = {SPI1, SPI2};
 
 static bool spi_invalid_handle(uint32_t handle)
 {
@@ -126,7 +121,7 @@ error_t spi_read(uint32_t handle, spi_configuration_t *config, uint8_t *data, ui
         return ERROR_INVALID;
     }
 
-    SPI_TypeDef *spi = g_spi_interfaces[handle].spi;
+    SPI_TypeDef *spi = g_spi_interfaces[handle];
     spi_configure(spi, config);
 
     while (length--) {
@@ -142,7 +137,7 @@ error_t spi_write(uint32_t handle, spi_configuration_t *config, uint8_t *data, u
         return ERROR_INVALID;
     }
 
-    SPI_TypeDef *spi = g_spi_interfaces[handle].spi;
+    SPI_TypeDef *spi = g_spi_interfaces[handle];
     spi_configure(spi,config);
 
     while (length--) {
@@ -159,7 +154,7 @@ error_t spi_read_write(uint32_t handle, spi_configuration_t *config, uint8_t *rd
         return ERROR_INVALID;
     }
 
-    SPI_TypeDef *spi = g_spi_interfaces[handle].spi;
+    SPI_TypeDef *spi = g_spi_interfaces[handle];
     spi_configure(spi, config);
 
     while (length--) {
@@ -183,7 +178,7 @@ error_t spi_read_dma(uint32_t spi_handle, spi_configuration_t *config, uint8_t *
 
 static void spi_write_dma_cb(uint32_t handle)
 {
-    SPI_TypeDef *spi = g_spi_interfaces[handle].spi;
+    SPI_TypeDef *spi = g_spi_interfaces[handle];
     spi->CR2 &= ~SPI_CR2_TXDMAEN;
     g_dma_in_use = false;
 }
@@ -197,7 +192,7 @@ error_t spi_write_dma(uint32_t spi_handle, spi_configuration_t *config, uint8_t 
     while(g_dma_in_use);
     g_dma_in_use = true;
 
-    SPI_TypeDef *spi = g_spi_interfaces[spi_handle].spi;
+    SPI_TypeDef *spi = g_spi_interfaces[spi_handle];
     spi_configure(spi,config);
 
     dma_configuration_t dma_config = {0};

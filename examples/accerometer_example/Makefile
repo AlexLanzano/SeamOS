@@ -1,7 +1,7 @@
 export MCU = stm32wb55xx
 export SEAMOS_LIB = $(PWD)/SeamOS.a
-export CONFIG = $(PWD)/config
-SEAMOS_PATH = ../../
+export CONFIG = $(PWD)/config.h
+SEAMOS_PATH = $(PWD)/../../
 GCC = $(COMPILER)gcc
 LD = $(COMPILER)ld
 OBJCOPY = $(COMPILER)objcopy
@@ -20,6 +20,14 @@ DEPDIR = .deps/
 ACCELEROMETER_EXAMPLE_SOURCE = $(wildcard applications/*.c) \
                                $(wildcard init/*.c)
 ACCELEROMETER_EXAMPLE_OBJECTS = $(patsubst %.c,%.o,$(ACCELEROMETER_EXAMPLE_SOURCE))
+
+export SEAMOS_DRIVER_SOURCE = $(SEAMOS_PATH)/drivers/serial/log.c \
+                              $(SEAMOS_PATH)/drivers/sensor/accelerometer/mma8451.c
+
+export SEAMOS_MCU_INTERFACES_SOURCE = $(SEAMOS_PATH)/mcu/$(MCU)/interfaces/gpio.c \
+                                      $(SEAMOS_PATH)/mcu/$(MCU)/interfaces/uart.c \
+                                      $(SEAMOS_PATH)/mcu/$(MCU)/interfaces/system_timer.c \
+                                      $(SEAMOS_PATH)/mcu/$(MCU)/interfaces/i2c.c
 
 DEPENDS = $(patsubst %.c,$(DEPDIR)/%.d,$(ACCELEROMETER_EXAMPLE_SOURCE))
 

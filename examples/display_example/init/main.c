@@ -34,9 +34,8 @@ void main()
     device_init("log", &g_log_device_ops, &g_log_config);
     device_init("display", &g_st7789_device_ops, &g_st7789_config);
 
-    //log_init();
+    log_init();
     log_info("Display Example!");
-
 
     task_manager_init();
     task_manager_init_task(&display_task_entry,
