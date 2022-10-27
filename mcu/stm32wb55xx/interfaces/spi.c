@@ -165,11 +165,7 @@ error_t spi_read_write(uint32_t handle, spi_configuration_t *config, uint8_t *rd
     return SUCCESS;
 }
 
-/* static void spi_read_dma_cb() */
-/* { */
-
-/* } */
-
+#if defined(CONFIG_ENABLE_DMA1) || defined(CONFIG_ENABLE_DMA2)
 error_t spi_read_dma(uint32_t spi_handle, spi_configuration_t *config, uint8_t *data, uint32_t length)
 {
     // TODO: Implement
@@ -214,3 +210,4 @@ error_t spi_write_dma(uint32_t spi_handle, spi_configuration_t *config, uint8_t 
 
     return SUCCESS;
 }
+#endif
