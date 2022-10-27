@@ -61,6 +61,12 @@ static bool spi_tx_buffer_empty(SPI_TypeDef *spi)
     return (bool)(spi->SR & 2);
 }
 
+static bool spi_rx_buffer_not_empty(SPI_TypeDef *spi)
+{
+    return (bool)(spi->SR & 1);
+}
+
+
 static void spi_transmit_8bit(SPI_TypeDef *spi, uint8_t data)
 {
     while (!spi_tx_buffer_empty(spi)) {}
@@ -70,6 +76,16 @@ static void spi_transmit_8bit(SPI_TypeDef *spi, uint8_t data)
 static void spi_receive_8bit(SPI_TypeDef *spi, uint8_t *data)
 {
     *data = spi->DR;
+}
+
+static uint8_t spi_flush_rx(SPI_TypeDef *spi)
+{
+    uint8_t data;
+    while (spi_rx_buffer_not_empty(spi)) {
+        data = spi->DR;
+    }
+
+    return data;
 }
 
 error_t spi_enable(SPI_TypeDef *spi, uint32_t sck_pin, uint32_t miso_pin, uint32_t mosi_pin)
@@ -123,6 +139,8 @@ error_t spi_read(uint32_t handle, spi_configuration_t *config, uint8_t *data, ui
 
     SPI_TypeDef *spi = g_spi_interfaces[handle];
     spi_configure(spi, config);
+    uint8_t temp __attribute__((unused));
+    spi_receive_8bit(spi, &temp);
 
     while (length--) {
         spi_receive_8bit(spi, data++);
@@ -138,12 +156,15 @@ error_t spi_write(uint32_t handle, spi_configuration_t *config, uint8_t *data, u
     }
 
     SPI_TypeDef *spi = g_spi_interfaces[handle];
+    uint8_t temp __attribute__((unused));
     spi_configure(spi,config);
 
     while (length--) {
         while (!spi_tx_buffer_empty(spi)) {}
         *(uint8_t *)&spi->DR = *data++;
     }
+
+    spi_flush_rx(spi);
 
     return SUCCESS;
 }
@@ -165,11 +186,7 @@ error_t spi_read_write(uint32_t handle, spi_configuration_t *config, uint8_t *rd
     return SUCCESS;
 }
 
-/* static void spi_read_dma_cb() */
-/* { */
-
-/* } */
-
+#if defined(CONFIG_ENABLE_DMA1) || defined(CONFIG_ENABLE_DMA2)
 error_t spi_read_dma(uint32_t spi_handle, spi_configuration_t *config, uint8_t *data, uint32_t length)
 {
     // TODO: Implement
@@ -214,3 +231,4 @@ error_t spi_write_dma(uint32_t spi_handle, spi_configuration_t *config, uint8_t 
 
     return SUCCESS;
 }
+#endif
