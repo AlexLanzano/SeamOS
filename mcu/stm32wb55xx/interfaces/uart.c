@@ -32,7 +32,7 @@ error_t uart_enable(USART_TypeDef *uart, uint32_t tx_pin, uint32_t rx_pin, uint3
     gpio_configuration_t rx_pin_config = {0};
 
     tx_pin_config.mode = GPIO_MODE_ALT_FUNC;
-    tx_pin_config.pull_resistor = GPIO_PULL_RESISTOR_NONE;
+    tx_pin_config.pull_resistor = GPIO_PULL_RESISTOR_UP;
     tx_pin_config.output_type = GPIO_OUTPUT_TYPE_PUSH_PULL;
     if (uart == LPUART1) {
         tx_pin_config.alternate_function = GPIO_ALT_FUNC_8_LPUART;
@@ -45,12 +45,12 @@ error_t uart_enable(USART_TypeDef *uart, uint32_t tx_pin, uint32_t rx_pin, uint3
     }
 
     rx_pin_config.mode = GPIO_MODE_ALT_FUNC;
-    rx_pin_config.pull_resistor = GPIO_PULL_RESISTOR_NONE;
+    rx_pin_config.pull_resistor = GPIO_PULL_RESISTOR_UP;
     rx_pin_config.output_type = GPIO_OUTPUT_TYPE_PUSH_PULL;
     if (uart == LPUART1) {
-        tx_pin_config.alternate_function = GPIO_ALT_FUNC_8_LPUART;
+        rx_pin_config.alternate_function = GPIO_ALT_FUNC_8_LPUART;
     } else {
-        tx_pin_config.alternate_function = GPIO_ALT_FUNC_7_UART;
+        rx_pin_config.alternate_function = GPIO_ALT_FUNC_7_UART;
     }
     error = gpio_init(rx_pin, &rx_pin_config);
     if (error) {
@@ -104,6 +104,7 @@ error_t uart_read(uint32_t handle, uint8_t *data, uint32_t length)
     while (semaphore_lock(g_uart_mutexes[handle]) == ERROR_LOCKED);
 
     for (uint32_t i = 0; i < length; i++) {
+        while (!(device->ISR & USART_ISR_RXNE));
         data[i] = device->RDR;
     }
 
