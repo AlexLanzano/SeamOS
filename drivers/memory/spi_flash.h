@@ -17,7 +17,7 @@ typedef enum spi_flash_ioctl_command {
 } spi_flash_ioctl_command_t;
 
 typedef struct spi_flash_ioctl_read_id_arg {
-    uint32_t *id;
+    uint8_t *id;
 } spi_flash_ioctl_read_id_arg_t;
 
 typedef struct spi_flash_ioctl_read_arg {

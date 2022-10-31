@@ -106,7 +106,7 @@ error_t spi_enable(SPI_TypeDef *spi, uint32_t sck_pin, uint32_t miso_pin, uint32
 
     miso_pin_config.mode = GPIO_MODE_ALT_FUNC;
     miso_pin_config.output_type = GPIO_OUTPUT_TYPE_PUSH_PULL;
-    miso_pin_config.pull_resistor = GPIO_PULL_RESISTOR_NONE;
+    miso_pin_config.pull_resistor = GPIO_PULL_RESISTOR_UP;
     miso_pin_config.alternate_function = GPIO_ALT_FUNC_5_SPI;
     error = gpio_init(miso_pin, &miso_pin_config);
     if (error) {

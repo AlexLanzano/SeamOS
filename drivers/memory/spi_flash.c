@@ -73,14 +73,14 @@ error_t spi_flash_write(void *config, void *data, uint32_t data_length)
     return ERROR_NOT_IMPLEMENTED;
 }
 
-error_t spi_flash_ioctl_read_id(const spi_flash_configuration_t *device, uint32_t *id)
+error_t spi_flash_ioctl_read_id(const spi_flash_configuration_t *device, uint8_t *id)
 {
     uint8_t command = SPI_FLASH_COMMAND_READ_ID;
 
     spi_flash_enable(device->cs_pin);
 
     spi_write(device->interface, &g_spi_interface_config, &command, 1);
-    spi_read_write(device->interface, &g_spi_interface_config, (uint8_t *)id, 0xff, 3);
+    spi_read_write(device->interface, &g_spi_interface_config, id, 0xff, 3);
 
     spi_flash_disable(device->cs_pin);
 
